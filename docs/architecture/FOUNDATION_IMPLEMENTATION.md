@@ -112,6 +112,8 @@ The runtime uses only the BCL and the shared ASP.NET Core framework reference in
 
 It never reports an untested external service as healthy. If future packet/database implementation is enabled before it exists, options validation fails startup with an explicit foundation-stage error.
 
+Application lifecycle now uses the explicit `Created`, `Initialising`, `Starting`, `Running`, `Stopping`, `Stopped`, and `Failed` states. A first hosted-service hook initializes the process, a last hosted-service hook publishes readiness, and Generic Host remains responsible for service ordering, cancellation, and disposal. See [APPLICATION_LIFECYCLE.md](APPLICATION_LIFECYCLE.md).
+
 ## Configuration
 
 Sections under `InfiniteSky`:
@@ -169,7 +171,7 @@ From the repository root:
 dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
 ```
 
-GitHub Actions performs restore, Release build, tests, and `dotnet format --verify-no-changes`.
+GitHub Actions performs restore, Release build, tests, and `dotnet format --verify-no-changes` on Ubuntu and Windows. A local Linux-x64 publish build is used as a cross-platform compile check when WSL or a Linux host is unavailable.
 
 ## Migration evidence
 
@@ -178,5 +180,7 @@ Foundation work advances only:
 - `INF-001` Generic-host executable: verified by host integration tests;
 - `INF-002` strong configuration model: verified by binding/validation/environment tests;
 - `INF-009` structured logging: implemented; full correlation/redaction coverage remains future work.
+- `INF-006` graceful shutdown coordination: implemented for the foundation lifecycle; network/database drain remains future work.
+- `INF-011` failure policy: implemented for lifecycle, observer, background-service, and process failure; zone failure isolation remains future work.
 
 Protocol, networking, persistence, data, world, gameplay, scripting, and administration functionality remain `NOT_STARTED`.

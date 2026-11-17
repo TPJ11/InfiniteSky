@@ -1,4 +1,3 @@
-using InfiniteSky.Application.Health;
 using InfiniteSky.Server.Configuration;
 
 using Microsoft.Extensions.Configuration;
@@ -31,13 +30,22 @@ public static class ServerHostBuilder
             {
                 hostOptions.ShutdownTimeout =
                     TimeSpan.FromSeconds(options.Value.Application.ShutdownTimeoutSeconds);
+                hostOptions.ServicesStartConcurrently = options.Value.Hosting.StartServicesConcurrently;
+                hostOptions.ServicesStopConcurrently = options.Value.Hosting.StopServicesConcurrently;
+                hostOptions.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost;
             });
 
         builder.Services.AddSingleton<IValidateOptions<InfiniteSkyOptions>, InfiniteSkyOptionsValidator>();
-        builder.Services.AddSingleton<FoundationHostedService>();
-        builder.Services.AddSingleton<IHostedService>(services => services.GetRequiredService<FoundationHostedService>());
-        builder.Services.AddSingleton<IApplicationReadiness>(
-            services => services.GetRequiredService<FoundationHostedService>());
+        builder.Services.AddInfiniteSkyInfrastructure();
+        builder.Services.AddSingleton<ApplicationReadinessHostedService>();
+        builder.Services.AddSingleton<IHostedService>(
+            provider => provider.GetRequiredService<ApplicationReadinessHostedService>());
+        builder.ConfigureContainer(
+            new DefaultServiceProviderFactory(new ServiceProviderOptions
+            {
+                ValidateOnBuild = true,
+                ValidateScopes = true,
+            }));
 
         return builder;
     }

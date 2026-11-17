@@ -22,6 +22,11 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
             failures.Add("InfiniteSky:Application:ShutdownTimeoutSeconds must be between 1 and 300.");
         }
 
+        if (string.IsNullOrWhiteSpace(options.Diagnostics.ServiceName))
+        {
+            failures.Add("InfiniteSky:Diagnostics:ServiceName is required.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.Networking.BindAddress))
         {
             failures.Add("InfiniteSky:Networking:BindAddress is required.");

@@ -35,6 +35,12 @@ dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj --no-build
 
 PowerShell helpers are available under `scripts/`. See [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md) and [MIGRATION_STATUS.md](MIGRATION_STATUS.md) for scope and progress.
 
+Lifecycle, DI, configuration, diagnostics, background-service, and health conventions are documented in [`docs/architecture/`](docs/architecture/).
+
+The server exits with code `0` after normal shutdown and code `1` on fatal startup/runtime failure. Networking and database remain disabled and unprobed until their later migration stages exist.
+
+GitHub Actions validates the .NET foundation on both Ubuntu and Windows. No Linux-only service wrapper or Windows Service is installed at this stage; the portable Generic Host is the deployment foundation.
+
 The legacy Node.js code and its installation instructions remain below for reference.
 
 [![Join the chat at https://gitter.im/LiamKarlMitchell/InfiniteSky](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/LiamKarlMitchell/InfiniteSky?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

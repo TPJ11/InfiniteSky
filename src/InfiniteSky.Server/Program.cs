@@ -1,7 +1,5 @@
 using InfiniteSky.Server.Hosting;
 
-using Microsoft.Extensions.Hosting;
-
 namespace InfiniteSky.Server;
 
 /// <summary>
@@ -12,9 +10,8 @@ public static class Program
     /// <summary>
     /// Builds and runs the Generic Host.
     /// </summary>
-    public static async Task Main(string[] args)
+    public static Task<int> Main(string[] args)
     {
-        HostApplicationBuilder builder = ServerHostBuilder.Create(args);
-        await builder.Build().RunAsync();
+        return ServerApplication.RunAsync(args);
     }
 }

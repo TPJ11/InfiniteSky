@@ -5,8 +5,11 @@ namespace InfiniteSky.Application.Health;
 /// </summary>
 public enum ApplicationLifecyclePhase
 {
+    Created,
+    Initialising,
     Starting,
-    Ready,
+    Running,
     Stopping,
     Stopped,
+    Failed,
 }

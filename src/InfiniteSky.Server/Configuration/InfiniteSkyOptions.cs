@@ -16,6 +16,16 @@ public sealed class InfiniteSkyOptions
     public ApplicationOptions Application { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets host lifecycle coordination options.
+    /// </summary>
+    public HostingOptions Hosting { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets process diagnostics options.
+    /// </summary>
+    public DiagnosticsOptions Diagnostics { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets future listener options.
     /// </summary>
     public NetworkingOptions Networking { get; set; } = new();

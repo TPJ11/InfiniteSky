@@ -1,130 +1,95 @@
-using System.Collections.ObjectModel;
-
 using InfiniteSky.Application.Health;
-using InfiniteSky.Server.Configuration;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 
 namespace InfiniteSky.Server.Hosting;
 
 /// <summary>
-/// Owns the foundation host lifecycle and reports readiness only for components that actually exist.
+/// Owns the initialization and final-stop boundaries of the foundation host lifecycle.
 /// </summary>
-public sealed partial class FoundationHostedService : IHostedService, IApplicationReadiness
+public sealed partial class FoundationHostedService : IHostedService
 {
-    private static readonly IReadOnlyDictionary<string, string> StartingChecks =
-        new ReadOnlyDictionary<string, string>(new Dictionary<string, string>
-        {
-            ["Configuration"] = "Starting",
-            ["Hosting"] = "Starting",
-            ["Networking"] = "NotImplemented",
-            ["Database"] = "NotImplemented",
-        });
-
-    private readonly IHostEnvironment _environment;
+    private readonly ApplicationLifecycleCoordinator _lifecycle;
     private readonly ILogger<FoundationHostedService> _logger;
-    private readonly InfiniteSkyOptions _options;
-    private readonly CancellationTokenRegistration _stoppingRegistration;
-    private ApplicationReadinessSnapshot _current =
-        new(false, ApplicationLifecyclePhase.Starting, StartingChecks);
 
     /// <summary>
     /// Initializes the lifecycle service.
     /// </summary>
     public FoundationHostedService(
-        IOptions<InfiniteSkyOptions> options,
-        IHostEnvironment environment,
-        IHostApplicationLifetime applicationLifetime,
+        ApplicationLifecycleCoordinator lifecycle,
         ILogger<FoundationHostedService> logger)
     {
-        _options = options.Value;
-        _environment = environment;
+        _lifecycle = lifecycle;
         _logger = logger;
-        _stoppingRegistration = applicationLifetime.ApplicationStopping.Register(TransitionToStopping);
     }
 
     /// <inheritdoc />
-    public ApplicationReadinessSnapshot Current => Volatile.Read(ref _current);
-
-    /// <inheritdoc />
-    public Task StartAsync(CancellationToken cancellationToken)
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        var checks = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>
+        try
         {
-            ["Configuration"] = "Valid",
-            ["Hosting"] = "Running",
-            ["Networking"] = "DisabledByFoundation",
-            ["Database"] = "DisabledByFoundation",
-        });
+            _lifecycle.SetCheck("Configuration", "Valid");
+            _lifecycle.SetCheck("Networking", "DisabledByFoundation");
+            _lifecycle.SetCheck("Database", "DisabledByFoundation");
 
-        Volatile.Write(
-            ref _current,
-            new ApplicationReadinessSnapshot(true, ApplicationLifecyclePhase.Ready, checks));
-
-        LogStarted(
-            _logger,
-            _options.Application.Name,
-            _environment.EnvironmentName,
-            _options.Gameplay.CompatibilityProfile,
-            checks["Networking"],
-            checks["Database"]);
-
-        return Task.CompletedTask;
+            await _lifecycle.TransitionAsync(
+                ApplicationLifecyclePhase.Initialising,
+                "Initializing application infrastructure.",
+                cancellationToken);
+            await _lifecycle.TransitionAsync(
+                ApplicationLifecyclePhase.Starting,
+                "Starting hosted infrastructure.",
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            _lifecycle.MarkFailed("Application startup failed.");
+            LogStartupFailed(_logger, exception);
+            throw;
+        }
     }
 
     /// <inheritdoc />
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
-        var checks = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>
+        if (_lifecycle.Current.Phase == ApplicationLifecyclePhase.Failed)
         {
-            ["Configuration"] = "Valid",
-            ["Hosting"] = "Stopped",
-            ["Networking"] = "DisabledByFoundation",
-            ["Database"] = "DisabledByFoundation",
-        });
+            LogStopped(_logger);
+            return;
+        }
 
-        Volatile.Write(
-            ref _current,
-            new ApplicationReadinessSnapshot(false, ApplicationLifecyclePhase.Stopped, checks));
-
-        _stoppingRegistration.Dispose();
-        LogStopped(_logger);
-        return Task.CompletedTask;
-    }
-
-    private void TransitionToStopping()
-    {
-        var checks = new ReadOnlyDictionary<string, string>(new Dictionary<string, string>
+        try
         {
-            ["Configuration"] = "Valid",
-            ["Hosting"] = "Stopping",
-            ["Networking"] = "DisabledByFoundation",
-            ["Database"] = "DisabledByFoundation",
-        });
-
-        Volatile.Write(
-            ref _current,
-            new ApplicationReadinessSnapshot(false, ApplicationLifecyclePhase.Stopping, checks));
+            await _lifecycle.TransitionAsync(
+                ApplicationLifecyclePhase.Stopped,
+                "Application infrastructure stopped.",
+                cancellationToken);
+            LogStopped(_logger);
+        }
+        catch (Exception exception)
+        {
+            _lifecycle.MarkFailed("Application shutdown failed.");
+            LogShutdownFailed(_logger, exception);
+            throw;
+        }
     }
-
-    [LoggerMessage(
-        EventId = 1000,
-        Level = LogLevel.Information,
-        Message = "InfiniteSky foundation started: Name={ApplicationName}, Environment={Environment}, "
-            + "CompatibilityProfile={CompatibilityProfile}, Networking={NetworkingState}, Database={DatabaseState}")]
-    private static partial void LogStarted(
-        ILogger logger,
-        string applicationName,
-        string environment,
-        string compatibilityProfile,
-        string networkingState,
-        string databaseState);
 
     [LoggerMessage(
         EventId = 1001,
         Level = LogLevel.Information,
         Message = "InfiniteSky foundation stopped.")]
     private static partial void LogStopped(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 1002,
+        Level = LogLevel.Critical,
+        Message = "InfiniteSky foundation startup failed.")]
+    private static partial void LogStartupFailed(ILogger logger, Exception exception);
+
+    [LoggerMessage(
+        EventId = 1003,
+        Level = LogLevel.Critical,
+        Message = "InfiniteSky foundation shutdown failed.")]
+    private static partial void LogShutdownFailed(ILogger logger, Exception exception);
 }

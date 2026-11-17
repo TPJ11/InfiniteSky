@@ -14,9 +14,9 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 200 |
-| NOT_STARTED | 197 |
+| NOT_STARTED | 195 |
 | IN_PROGRESS | 0 |
-| IMPLEMENTED | 1 |
+| IMPLEMENTED | 3 |
 | VERIFIED | 2 |
 | BLOCKED | 0 |
 | NOT_APPLICABLE | 0 |
@@ -28,7 +28,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 
 | Subsystem | Total | Implemented | Verified | Blocked | Progress |
 |---|---:|---:|---:|---:|---:|
-| Infrastructure | 18 | 1 | 2 | 0 | 11.1% |
+| Infrastructure | 18 | 3 | 2 | 0 | 11.1% |
 | Networking | 10 | 0 | 0 | 0 | 0% |
 | Protocol | 33 | 0 | 0 | 0 | 0% |
 | Persistence | 12 | 0 | 0 | 0 | 0% |
@@ -41,7 +41,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **200** | **1** | **2** | **0** | **1%** |
+| **Total** | **200** | **3** | **2** | **0** | **1%** |
 
 ## Critical outstanding features
 
@@ -72,7 +72,7 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 
 ## Recommended next action
 
-Foundation Stage 1 is complete and awaits approval for Prompt 07. The next approved work should:
+Prompt 07 application infrastructure and lifecycle work is complete and awaits explicit approval for Prompt 08. The next approved work should:
 
 1. freeze hex packet captures and classify the `.pac` corpus;
 2. acquire a representative, sanitized MongoDB export and game-data manifest;

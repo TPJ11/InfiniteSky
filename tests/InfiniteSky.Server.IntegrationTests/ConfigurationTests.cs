@@ -27,6 +27,9 @@ public sealed class ConfigurationTests
         Assert.Equal(100, options.World.TickMilliseconds);
         Assert.Equal([1], options.Zones.Load);
         Assert.Equal("LegacyParity", options.Gameplay.CompatibilityProfile);
+        Assert.False(options.Hosting.StartServicesConcurrently);
+        Assert.False(options.Hosting.StopServicesConcurrently);
+        Assert.Equal("InfiniteSky", options.Diagnostics.ServiceName);
         Assert.False(options.Networking.Enabled);
         Assert.False(options.Database.Enabled);
     }

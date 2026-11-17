@@ -6,4 +6,6 @@ namespace InfiniteSky.Application.Health;
 public sealed record ApplicationReadinessSnapshot(
     bool IsReady,
     ApplicationLifecyclePhase Phase,
+    string Reason,
+    DateTimeOffset UpdatedAt,
     IReadOnlyDictionary<string, string> Checks);
