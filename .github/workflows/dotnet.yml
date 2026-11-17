@@ -1,0 +1,38 @@
+name: .NET foundation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+          cache: true
+          cache-dependency-path: |
+            **/packages.lock.json
+            **/*.csproj
+            Directory.Packages.props
+
+      - name: Restore
+        run: dotnet restore InfiniteSky.sln
+
+      - name: Build
+        run: dotnet build InfiniteSky.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test InfiniteSky.sln --no-restore --configuration Release --logger "console;verbosity=minimal"
+
+      - name: Verify formatting
+        run: dotnet format InfiniteSky.sln --verify-no-changes --no-restore

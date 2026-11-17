@@ -1,0 +1,10 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\InfiniteSky.Domain\InfiniteSky.Domain.csproj" />
+    <ProjectReference Include="..\InfiniteSky.Protocol\InfiniteSky.Protocol.csproj" />
+    <ProjectReference Include="..\InfiniteSky.GameData\InfiniteSky.GameData.csproj" />
+    <ProjectReference Include="..\InfiniteSky.World\InfiniteSky.World.csproj" />
+  </ItemGroup>
+
+</Project>

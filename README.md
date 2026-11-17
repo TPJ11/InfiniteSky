@@ -6,6 +6,37 @@ Someone needs to update it.
 InfiniteSky
 =========
 
+## .NET 10 foundation
+
+The repository now includes the approved .NET 10 solution foundation alongside the unchanged Node.js implementation.
+
+The current C# host provides:
+
+- the approved modular project and dependency structure;
+- a Generic Host composition root;
+- validated, strongly typed configuration;
+- structured startup/shutdown logging and foundation readiness;
+- test projects and developer build/test/format scripts;
+- GitHub Actions build, test, and formatting verification.
+
+It does **not** yet implement the legacy game protocol, TCP listeners, MongoDB access, game data loading, world simulation, or gameplay. Those remain governed by the feature parity matrix and migration plan.
+
+Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
+
+From the repository root:
+
+```powershell
+dotnet restore InfiniteSky.sln
+dotnet build InfiniteSky.sln --no-restore
+dotnet test InfiniteSky.sln --no-restore
+dotnet format InfiniteSky.sln --verify-no-changes --no-restore
+dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj --no-build
+```
+
+PowerShell helpers are available under `scripts/`. See [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md) and [MIGRATION_STATUS.md](MIGRATION_STATUS.md) for scope and progress.
+
+The legacy Node.js code and its installation instructions remain below for reference.
+
 [![Join the chat at https://gitter.im/LiamKarlMitchell/InfiniteSky](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/LiamKarlMitchell/InfiniteSky?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 InfiniteSky is an open-source project, based on public functionality of Twelve Sky. It is written in Node.JS

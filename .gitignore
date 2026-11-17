@@ -202,3 +202,12 @@ old files/itemactions-old.js
 *.WG
 *.WM
 *.IMG
+.vs/
+.vscode/.ropeproject
+artifacts/
+TestResults/
+coverage/
+coverage.*
+*.nupkg
+packages.lock.json
+src/InfiniteSky.Server/appsettings.*.local.json

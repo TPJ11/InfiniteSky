@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\InfiniteSky.Application\InfiniteSky.Application.csproj" />
+    <ProjectReference Include="..\InfiniteSky.Networking\InfiniteSky.Networking.csproj" />
+    <ProjectReference Include="..\InfiniteSky.World\InfiniteSky.World.csproj" />
+    <ProjectReference Include="..\InfiniteSky.Persistence\InfiniteSky.Persistence.csproj" />
+    <ProjectReference Include="..\InfiniteSky.Scripting\InfiniteSky.Scripting.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.Development.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="appsettings.Production.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
