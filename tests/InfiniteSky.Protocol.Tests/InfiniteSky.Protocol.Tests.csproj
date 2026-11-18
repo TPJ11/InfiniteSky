@@ -20,4 +20,10 @@
     <ProjectReference Include="..\..\src\InfiniteSky.Protocol\InfiniteSky.Protocol.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\fixtures\protocol\*.hex.txt"
+          Link="fixtures\protocol\%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
