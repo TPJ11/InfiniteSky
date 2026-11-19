@@ -41,6 +41,18 @@ The server exits with code `0` after normal shutdown and code `1` on fatal start
 
 GitHub Actions validates the .NET foundation on both Ubuntu and Windows. No Linux-only service wrapper or Windows Service is installed at this stage; the portable Generic Host is the deployment foundation.
 
+To enable loopback TCP transport for development:
+
+```powershell
+$env:INFINITESKY_InfiniteSky__Networking__Enabled = "true"
+$env:INFINITESKY_InfiniteSky__Networking__BindAddress = "127.0.0.1"
+$env:INFINITESKY_InfiniteSky__Networking__LoginPort = "11091"
+$env:INFINITESKY_InfiniteSky__Networking__WorldPort = "11092"
+dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
+```
+
+The listeners accept raw TCP connections but do not implement authentication, packet handlers, player sessions, or gameplay. See [NETWORKING_IMPLEMENTATION.md](docs/migration/NETWORKING_IMPLEMENTATION.md).
+
 The legacy Node.js code and its installation instructions remain below for reference.
 
 [![Join the chat at https://gitter.im/LiamKarlMitchell/InfiniteSky](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/LiamKarlMitchell/InfiniteSky?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)

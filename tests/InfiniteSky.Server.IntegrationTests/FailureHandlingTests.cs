@@ -32,7 +32,7 @@ public sealed class FailureHandlingTests
     public async Task ProcessEntryPointReturnsNonZeroForFatalConfigurationFailure()
     {
         int exitCode = await ServerApplication.RunAsync(
-            ["--InfiniteSky:Networking:Enabled", "true"]);
+            ["--InfiniteSky:Database:Enabled", "true"]);
 
         Assert.Equal(1, exitCode);
     }

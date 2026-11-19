@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\InfiniteSky.Protocol\InfiniteSky.Protocol.csproj" />
     <ProjectReference Include="..\InfiniteSky.Application\InfiniteSky.Application.csproj" />
   </ItemGroup>

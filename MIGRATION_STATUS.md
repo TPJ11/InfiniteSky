@@ -14,13 +14,13 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 200 |
-| NOT_STARTED | 177 |
+| NOT_STARTED | 169 |
 | IN_PROGRESS | 1 |
-| IMPLEMENTED | 16 |
-| VERIFIED | 6 |
+| IMPLEMENTED | 19 |
+| VERIFIED | 11 |
 | BLOCKED | 0 |
 | NOT_APPLICABLE | 0 |
-| Overall verified progress | 3% |
+| Overall verified progress | 5.5% |
 
 Known blocked research areas are not assigned `BLOCKED` status until their owner and blocker decision are formally recorded. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
@@ -28,8 +28,8 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 
 | Subsystem | Total | Implemented | Verified | Blocked | Progress |
 |---|---:|---:|---:|---:|---:|
-| Infrastructure | 18 | 3 | 2 | 0 | 11.1% |
-| Networking | 10 | 0 | 0 | 0 | 0% |
+| Infrastructure | 18 | 3 | 4 | 0 | 22.2% |
+| Networking | 10 | 3 | 3 | 0 | 60% |
 | Protocol | 33 | 3 | 6 | 0 | 27.3% |
 | Persistence | 12 | 0 | 0 | 0 | 0% |
 | Game data | 11 | 0 | 0 | 0 | 0% |
@@ -41,7 +41,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **200** | **16** | **6** | **0** | **3%** |
+| **Total** | **200** | **19** | **11** | **0** | **5.5%** |
 
 ## Completed domain model work
 
@@ -65,6 +65,20 @@ Persistence mapping, world simulation, complete packet lifecycle, and gameplay a
 
 The complete Character/world packet tails and compressed state remain unresolved.
 
+## Completed networking work
+
+- TCP-only login and world listeners with validated loopback/address and configured ports.
+- Shared connection manager with unique IDs, states, limits, exact removal, and disposal.
+- Nine-byte receive framing with fixed-payload opcode registry integration.
+- Fragmented/coalesced/multi-frame receive accumulator with bounded buffering.
+- One ordered bounded send channel per connection.
+- Remote disconnect, idle timeout, unknown opcode, receive/send failure, and listener shutdown handling.
+- Unauthenticated packet sink with debug/warning observation and no gameplay/session association.
+- Real networking metrics for active/accepted/disconnected connections, frames, bytes, and failures.
+- Loopback tests for listener, receive, send, limits, and remote disconnect.
+
+Authentication, packet handlers, session transfer, UDP, TLS, application heartbeat, and global load testing remain outside this stage.
+
 ## Outstanding domain gaps
 
 - `MonstersKilled` has no typed key/usage evidence and remains deferred.
@@ -80,7 +94,7 @@ The immediate critical path is:
 2. `DAT-001..008` — original game data and world data readers.
 3. `DOM-007..008` and persistence/protocol mappings for implemented models — progression, stats, and boundary conversion.
 4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — character/BSON and safe save behavior.
-5. `NET-001..009` — transport, session phase, and transfer.
+5. `NET-005..009` — session phase, address selection, and transfer.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
 7. `WLD-002`, `ZON-002`, `ENT-001..002` — zone actor/spatial ownership/state.
 8. `INT-006..009` — real data/client compatibility and performance evidence.
@@ -101,7 +115,7 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 
 ## Recommended next action
 
-Prompt 09 binary protocol foundation work is complete and awaits explicit approval for Prompt 10. The next approved work should:
+Prompt 10 networking infrastructure work is complete and awaits explicit approval for Prompt 11. The next approved work should:
 
 1. freeze hex packet captures and classify the `.pac` corpus;
 2. acquire a representative, sanitized MongoDB export and game-data manifest;

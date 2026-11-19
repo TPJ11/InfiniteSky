@@ -37,6 +37,9 @@ public static class ServerHostBuilder
 
         builder.Services.AddSingleton<IValidateOptions<InfiniteSkyOptions>, InfiniteSkyOptionsValidator>();
         builder.Services.AddInfiniteSkyInfrastructure();
+        builder.Services.AddSingleton<NetworkHostedService>();
+        builder.Services.AddSingleton<IHostedService>(
+            provider => provider.GetRequiredService<NetworkHostedService>());
         builder.Services.AddSingleton<ApplicationReadinessHostedService>();
         builder.Services.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<ApplicationReadinessHostedService>());

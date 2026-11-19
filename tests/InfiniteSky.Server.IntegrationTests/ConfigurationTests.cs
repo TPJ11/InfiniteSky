@@ -31,6 +31,12 @@ public sealed class ConfigurationTests
         Assert.False(options.Hosting.StopServicesConcurrently);
         Assert.Equal("InfiniteSky", options.Diagnostics.ServiceName);
         Assert.False(options.Networking.Enabled);
+        Assert.Equal(100, options.Networking.MaxConcurrentConnections);
+        Assert.Equal(10_240, options.Networking.MaxReceiveBufferBytes);
+        Assert.Equal(10_240, options.Networking.MaxFrameBytes);
+        Assert.Equal(64, options.Networking.SendQueueCapacity);
+        Assert.Equal(120, options.Networking.IdleTimeoutSeconds);
+        Assert.Equal(30, options.Networking.ConnectionShutdownTimeoutSeconds);
         Assert.False(options.Database.Enabled);
     }
 
@@ -50,7 +56,7 @@ public sealed class ConfigurationTests
     }
 
     [Fact]
-    public void ValidatorRejectsUnimplementedExternalSubsystems()
+    public void ValidatorRejectsUnimplementedDatabaseButAllowsValidatedNetworking()
     {
         var validator = new InfiniteSkyOptionsValidator();
         var options = new InfiniteSkyOptions
@@ -62,9 +68,6 @@ public sealed class ConfigurationTests
         ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
 
         Assert.True(result.Failed);
-        Assert.Contains(
-            result.Failures,
-            failure => failure.Contains("Networking cannot be enabled", StringComparison.Ordinal));
         Assert.Contains(
             result.Failures,
             failure => failure.Contains("Database access cannot be enabled", StringComparison.Ordinal));
@@ -88,5 +91,54 @@ public sealed class ConfigurationTests
         {
             Environment.SetEnvironmentVariable(variableName, null);
         }
+    }
+
+    [Fact]
+    public void ValidatorRejectsInvalidNetworkingLimits()
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Networking = new NetworkingOptions
+            {
+                BindAddress = "not-an-ip",
+                LoginPort = 11091,
+                WorldPort = 11091,
+                MaxConcurrentConnections = 0,
+                MaxReceiveBufferBytes = 8,
+                MaxFrameBytes = 8,
+                SendQueueCapacity = 0,
+                IdleTimeoutSeconds = -1,
+                ConnectionShutdownTimeoutSeconds = 0,
+            },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.True(result.Failed);
+        Assert.Contains(result.Failures, value => value.Contains("Network", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ValidatorRejectsFrameLimitAboveReceiveBufferLimit()
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Networking = new NetworkingOptions
+            {
+                MaxReceiveBufferBytes = 1024,
+                MaxFrameBytes = 2048,
+            },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.NotNull(result.Failures);
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains(
+                "MaxFrameBytes must not exceed MaxReceiveBufferBytes",
+                StringComparison.Ordinal));
     }
 }

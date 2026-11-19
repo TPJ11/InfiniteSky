@@ -49,13 +49,14 @@ public sealed partial class ApplicationReadinessHostedService : IHostedService
                 "All hosted services have started.",
                 cancellationToken);
 
+            ApplicationReadinessSnapshot snapshot = _lifecycle.Current;
             LogStarted(
                 _logger,
                 _options.Application.Name,
                 _environment.EnvironmentName,
                 _options.Gameplay.CompatibilityProfile,
-                "DisabledByFoundation",
-                "DisabledByFoundation");
+                snapshot.Checks["Networking"],
+                snapshot.Checks["Database"]);
         }
         catch (Exception exception)
         {
