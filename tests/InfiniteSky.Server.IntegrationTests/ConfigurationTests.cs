@@ -26,6 +26,10 @@ public sealed class ConfigurationTests
         Assert.Equal("ConfigurationTest", options.Application.Name);
         Assert.Equal(100, options.World.TickMilliseconds);
         Assert.Equal([1], options.Zones.Load);
+        Assert.Equal(4, options.Zones.AsyncLoadLimit);
+        Assert.Equal(6, options.Zones.QuadTreeDepth);
+        Assert.Equal(10, options.Zones.QuadTreeLimit);
+        Assert.Equal(500, options.Zones.ViewableActionDistance);
         Assert.Equal("LegacyParity", options.Gameplay.CompatibilityProfile);
         Assert.False(options.Hosting.StartServicesConcurrently);
         Assert.False(options.Hosting.StopServicesConcurrently);
@@ -204,5 +208,31 @@ public sealed class ConfigurationTests
             failure => failure.Contains(
                 "Authentication:TimeoutSeconds",
                 StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ValidatorRejectsInvalidZoneLoadAndSpatialSettings()
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Zones = new ZonesOptions
+            {
+                Load = [1, 1],
+                AsyncLoadLimit = 0,
+                QuadTreeDepth = 33,
+                QuadTreeLimit = 0,
+                ViewableActionDistance = double.NaN,
+            },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.True(result.Failed);
+        Assert.Contains(result.Failures, value => value.Contains("duplicate zone IDs", StringComparison.Ordinal));
+        Assert.Contains(result.Failures, value => value.Contains("AsyncLoadLimit", StringComparison.Ordinal));
+        Assert.Contains(result.Failures, value => value.Contains("QuadTreeDepth", StringComparison.Ordinal));
+        Assert.Contains(result.Failures, value => value.Contains("QuadTreeLimit", StringComparison.Ordinal));
+        Assert.Contains(result.Failures, value => value.Contains("ViewableActionDistance", StringComparison.Ordinal));
     }
 }

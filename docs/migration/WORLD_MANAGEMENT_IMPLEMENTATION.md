@@ -16,7 +16,7 @@ The root implementation has a hard-coded 100 ms interval in [`GameStep.js`](../.
 | Lifecycle | `WorldHostedService` | Generic Host service initializes before networking and shuts down before persistence |
 | Configuration | `WorldConfiguration` from `InfiniteSky:World:TickMilliseconds` | Defaults to the observed 100 ms cadence; validates 1–10,000 ms |
 | Guild bootstrap | `IGuildRepository`, `MongoGuildRepository`, `MongoGuildDocumentMapper` | Reads legacy guild documents when MongoDB is enabled; names are looked up ordinally |
-| Zone boundary | `IWorldZoneReadiness` | No provider is registered yet, so the runtime accurately reports zone runtime unavailable |
+| Zone boundary | `ZoneManager` / `IWorldZoneReadiness` | Reports selected, fully initialized zones; empty configuration remains unavailable |
 | Tick boundary | `WorldClock`, `IWorldTickHandler` | Uses `PeriodicTimer` and measured elapsed time; does not implement zone ticks or simulation |
 | Health and metrics | `WorldHealthCheck`, `WorldMetrics` | Reports lifecycle/readiness, guild/zone counts, ticks, and initialization/failure measurements |
 
@@ -28,9 +28,9 @@ The Generic Host starts persistence before `WorldHostedService`, and world befor
 
 1. Transition the runtime from `Created` to `Initializing`.
 2. If MongoDB persistence is enabled and its hosted-service startup checks have succeeded, asynchronously read the configured guild collection. A guild-read failure is logged and represented as a readiness blocker, matching the original behavior of logging a failed guild query without aborting world startup. A MongoDB connection/startup failure still fails the Generic Host before the world service starts.
-3. Validate and snapshot zone-readiness-provider results. With no registered provider, no zones are fabricated and zone readiness remains unavailable.
+3. Validate and snapshot zone-readiness-provider results. The actual zone manager is registered; no zones are fabricated when the configured list is empty.
 4. Publish the immutable configuration/guild/readiness snapshot and transition through `Initialized`, `Starting`, and `Running`.
-5. Start the hosted background operation. The world clock remains idle until `WorldRuntimeSnapshot.IsReady` is true; no zone provider currently makes it ready.
+5. Start the hosted background operation. The world clock remains idle until `WorldRuntimeSnapshot.IsReady` is true; the zone manager supplies readiness, but guild-data availability may still keep the world degraded.
 6. During host shutdown, stop the world operation before MongoDB persistence is stopped.
 
 Initialization errors fail the host startup and mark the runtime failed. Disabled persistence and a guild-read failure after persistence startup are degraded conditions, not false success. Failure of MongoDB's own hosted-service startup checks prevents the world service from starting. Cancellation is propagated; the host controls the overall shutdown timeout.
@@ -45,7 +45,7 @@ The C# default collection name `guilds` is inferred from the Mongoose model name
 
 `WorldRuntime` serializes state transitions and snapshot replacement with a private lock. Guild data is copied into an ordinal-keyed dictionary before it becomes visible. Tick callbacks execute sequentially and are awaited; the clock uses cancellation-aware `PeriodicTimer` waits. No database or network operation is performed while holding the runtime lock.
 
-This stage has no world registry, world-level mutable player collection, zone actor, or gameplay state. Zone readiness is a read-only boundary, not a placeholder zone implementation.
+This stage has no world registry, world-level mutable player collection, zone actor, or gameplay state. Prompt 14 adds a real static zone manager and spatial infrastructure; it does not create player/entity state or gameplay.
 
 ## Verification
 
@@ -65,4 +65,4 @@ This is unit and host-integration evidence, not a full client/world integration 
 - The original guild query is not awaited; C# awaits the query when persistence is enabled, but degrades on failure to preserve continued startup.
 - The physical legacy guild collection and representative production BSON remain unverified.
 
-Prompt 14 zone management and spatial systems have not been started.
+Prompt 14 zone management and spatial infrastructure are implemented but not verified for original-client or live WREGION compatibility. See [ZONE_MANAGEMENT_IMPLEMENTATION.md](ZONE_MANAGEMENT_IMPLEMENTATION.md) and the related lifecycle/spatial documents.

@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\InfiniteSky.Domain\InfiniteSky.Domain.csproj" />
+    <ProjectReference Include="..\InfiniteSky.Protocol\InfiniteSky.Protocol.csproj" />
   </ItemGroup>
 
 </Project>

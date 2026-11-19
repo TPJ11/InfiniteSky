@@ -20,15 +20,16 @@ No opcodes, packet formats, or client-facing behavior are changed by this stage.
 
 ## Zone boundary
 
-`IWorldZoneReadiness` allows a future zone subsystem to report whether configured zones are loaded and how many are available. No implementation is registered in this stage. Consequently:
+`ZoneManager` implements `IWorldZoneReadiness` and reports the loaded configured zone count. It is hosted before `WorldHostedService`, and its health check distinguishes empty configuration, startup failure, and a complete zone set. Consequently:
 
 - no fake zone is created;
-- no zone data is loaded;
-- world readiness remains degraded with `ZoneRuntimeUnavailable`;
-- the world clock waits rather than running zone simulation without ready zones;
-- no spatial, entity, movement, transition, or gameplay logic is present.
+- only configured catalog IDs are considered;
+- missing legacy NPC/WREGION files remain optional, while malformed files fail startup;
+- an empty zone list keeps world readiness degraded with `ZoneRuntimeUnavailable`;
+- the world clock waits while the world is degraded and does not run zone simulation;
+- spatial candidate indexing exists, but entity, movement, transition, and gameplay behavior does not.
 
-Root `world.js` enumerates numeric `config.Zones` entries, loads configured zones through a bounded async queue, and emits `ready` when the queue drains ([`world.js`](../../world.js#L783-L806)). Zone-to-world lifecycle orchestration will be implemented in Prompt 14, based on the original code and approved architecture.
+Root `world.js` enumerates numeric `config.Zones` entries and loads configured zones through a bounded async queue ([`world.js`](../../world.js#L783-L806)). Prompt 14 implements the corresponding static manager and host boundary; see [ZONE_MANAGEMENT_IMPLEMENTATION.md](ZONE_MANAGEMENT_IMPLEMENTATION.md).
 
 ## Events and timers
 
@@ -40,5 +41,5 @@ The root world subscribes to global `step` events, runs a no-op `world.GameStep`
 - There is no source-backed world ID to expose to clients or configuration.
 - World availability/capacity semantics are not implemented.
 - Authenticated sessions are not inserted into a player/entity collection.
-- World shutdown currently has no zone drain or save coordination to perform.
+- World shutdown is ordered before zone shutdown, but no entity/player drain or save coordination exists yet.
 - Persistence-backed guild data and synthetic mapping tests do not prove compatibility with production BSON.

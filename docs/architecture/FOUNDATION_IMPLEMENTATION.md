@@ -60,6 +60,7 @@ flowchart BT
 
     Protocol --> Domain
     GameData --> Domain
+    GameData --> Protocol
     Persistence --> Domain
     World --> Domain
     World --> Protocol
@@ -124,7 +125,7 @@ Sections under `InfiniteSky`:
 | `Networking` | reserved login/world endpoint settings; disabled |
 | `Database` | provider and secret-ready connection string; disabled |
 | `World` | legacy tick interval |
-| `Zones` | future zone load IDs |
+| `Zones` | selected original zone IDs, bounded load concurrency, QuadTree settings, action candidate distance |
 | `Gameplay` | `LegacyParity` or `Corrected` profile |
 
 Environment variables use standard double-underscore hierarchy:

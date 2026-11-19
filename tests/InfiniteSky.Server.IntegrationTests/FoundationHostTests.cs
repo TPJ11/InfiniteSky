@@ -1,9 +1,14 @@
 using InfiniteSky.Application.Health;
+using InfiniteSky.Domain.Identifiers;
+using InfiniteSky.Domain.Zones;
+using InfiniteSky.GameData.Zones;
 using InfiniteSky.Server.Hosting;
 using InfiniteSky.World;
+using InfiniteSky.World.Zones;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
@@ -77,6 +82,50 @@ public sealed class FoundationHostTests
 
         await host.StopAsync();
         Assert.Equal(WorldLifecycleState.Stopped, runtime.Current.State);
+    }
+
+    [Theory]
+    [InlineData(true, HealthStatus.Healthy)]
+    [InlineData(false, HealthStatus.Degraded)]
+    public async Task ConfiguredZonesStartBeforeWorldAndSupplyRealReadiness(
+        bool resourcesExist,
+        HealthStatus expectedZoneHealth)
+    {
+        HostApplicationBuilder builder = ServerHostBuilder.Create();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["InfiniteSky:Zones:Load:0"] = "1",
+        });
+        builder.Services.RemoveAll<IZoneResourceLoader>();
+        builder.Services.AddSingleton<IZoneResourceLoader>(new EmptyZoneResourceLoader(resourcesExist));
+        using IHost host = builder.Build();
+
+        Type[] hostedServiceTypes = host.Services.GetServices<IHostedService>()
+            .Select(service => service.GetType())
+            .ToArray();
+        Assert.True(
+            Array.IndexOf(hostedServiceTypes, typeof(ZoneManagementHostedService))
+            < Array.IndexOf(hostedServiceTypes, typeof(WorldHostedService)));
+
+        await host.StartAsync();
+
+        IZoneManager manager = host.Services.GetRequiredService<IZoneManager>();
+        WorldRuntime runtime = host.Services.GetRequiredService<WorldRuntime>();
+        Assert.True(manager.IsReady);
+        Assert.Equal(1, manager.LoadedZoneCount);
+        Assert.Equal(1, runtime.Current.LoadedZoneCount);
+        Assert.DoesNotContain(WorldReadinessBlocker.ZoneRuntimeUnavailable, runtime.Current.Blockers);
+        Assert.Contains(WorldReadinessBlocker.GuildDataUnavailable, runtime.Current.Blockers);
+        HealthReportEntry zoneHealth = (await host.Services.GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(predicate: check => check.Name == "zones-readiness"))
+            .Entries["zones-readiness"];
+        Assert.Equal(expectedZoneHealth, zoneHealth.Status);
+        Assert.Equal(resourcesExist ? 0 : 1, zoneHealth.Data["ZonesMissingMoveRegionFiles"]);
+
+        await host.StopAsync();
+
+        Assert.Equal(ZoneManagerState.Stopped, manager.Current.State);
+        Assert.Empty(manager.GetZones());
     }
 
     [Fact]
@@ -178,6 +227,21 @@ public sealed class FoundationHostTests
         {
             phases.Add(transition.Current);
             return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class EmptyZoneResourceLoader(bool filesExist) : IZoneResourceLoader
+    {
+        public Task<ZoneResourceData> LoadAsync(ZoneId zoneId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return Task.FromResult(new ZoneResourceData(
+                Array.Empty<SpawnDefinition>(),
+                Array.Empty<InfiniteSky.Protocol.Structures.LegacyWorldRegion>(),
+                Array.Empty<InfiniteSky.Protocol.Structures.LegacyWorldRegion>(),
+                filesExist,
+                filesExist,
+                filesExist));
         }
     }
 }

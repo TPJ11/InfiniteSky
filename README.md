@@ -21,7 +21,7 @@ The current C# host provides:
 - test projects and developer build/test/format scripts;
 - GitHub Actions build, test, and formatting verification.
 
-The world lifecycle is not full world readiness: no zone provider or world packet/session-entry path is registered, so world health remains degraded and zone/gameplay simulation does not run. The server does **not** yet implement complete legacy game protocol behavior, character selection/creation, game data loading, zone management, or gameplay. Those remain governed by the feature parity matrix and migration plan.
+The host now loads explicitly selected legacy zone definitions, parses optional NPC/WREGION files, maintains zone lifecycle/readiness, and provides a source-compatible X/Z spatial candidate index. This is infrastructure only: it does not instantiate NPCs or players, process world-entry or movement packets, perform zone transfers, load terrain, or run gameplay. With the default empty zone list, world health remains degraded rather than creating a placeholder zone. Complete game protocol and gameplay migration remain governed by the feature parity matrix and migration plan.
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
 
@@ -57,7 +57,16 @@ The listeners accept raw TCP connections and the login endpoint has an authentic
 
 ### World lifecycle and guild bootstrap
 
-The server initializes a single process-local world before starting network listeners. `InfiniteSky:World:TickMilliseconds` defaults to the legacy 100 ms cadence. With MongoDB enabled, after MongoDB's host startup checks pass, world startup loads the configured guild collection; a guild-query failure or the not-yet-implemented zone runtime is reported as degraded world readiness. A MongoDB connection/startup failure prevents host startup. This is lifecycle/bootstrap infrastructure only: it does not load zones, create players, process world packets, or run gameplay. See [WORLD_MANAGEMENT_IMPLEMENTATION.md](docs/migration/WORLD_MANAGEMENT_IMPLEMENTATION.md), [WORLD_LIFECYCLE.md](docs/migration/WORLD_LIFECYCLE.md), [WORLD_CONFIGURATION.md](docs/migration/WORLD_CONFIGURATION.md), and [WORLD_INTEGRATION_BOUNDARIES.md](docs/migration/WORLD_INTEGRATION_BOUNDARIES.md).
+The server initializes a single process-local world before starting network listeners. `InfiniteSky:World:TickMilliseconds` defaults to the legacy 100 ms cadence. The zone manager starts before the world and networking; it loads only IDs listed in `InfiniteSky:Zones:Load`, and readiness is healthy only when that list is nonempty and all selected zones are running. The default list is empty. With MongoDB enabled, world startup also loads the configured guild collection; unavailable guild data or zones keep world readiness degraded. This stage does not create players, process world packets, transfer characters, or run gameplay. See [WORLD_MANAGEMENT_IMPLEMENTATION.md](docs/migration/WORLD_MANAGEMENT_IMPLEMENTATION.md), [ZONE_MANAGEMENT_IMPLEMENTATION.md](docs/migration/ZONE_MANAGEMENT_IMPLEMENTATION.md), [ZONE_LIFECYCLE.md](docs/migration/ZONE_LIFECYCLE.md), [SPATIAL_SYSTEMS.md](docs/migration/SPATIAL_SYSTEMS.md), [ZONE_VISIBILITY_AND_TRANSITIONS.md](docs/migration/ZONE_VISIBILITY_AND_TRANSITIONS.md), [WORLD_LIFECYCLE.md](docs/migration/WORLD_LIFECYCLE.md), [WORLD_CONFIGURATION.md](docs/migration/WORLD_CONFIGURATION.md), and [WORLD_INTEGRATION_BOUNDARIES.md](docs/migration/WORLD_INTEGRATION_BOUNDARIES.md).
+
+To load an original catalog zone such as zone 1, set its ID before starting the host. Data paths resolve relative to the host content root; absent NPC and WREGION files are optional, but malformed files fail startup:
+
+```powershell
+$env:INFINITESKY_InfiniteSky__Zones__Load__0 = "1"
+dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
+```
+
+Only the 62 IDs in the original `config.json-dist` catalog are accepted. `data\spawninfo\*.NPC` records are loaded as definitions, not spawned entities. `.MOB` spawn loading remains disabled, and the repository has no `.WREGION` or active terrain/navigation resources. Missing optional files do not prevent zone startup, but zone health reports the missing-resource counts as degraded.
 
 ### Configure MongoDB account persistence
 

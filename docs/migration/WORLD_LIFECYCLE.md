@@ -30,11 +30,11 @@ Readiness is separate from lifecycle state:
 | Before host initialization | `Created` / `NotInitialized` | Degraded |
 | During initialization | `Initializing` / `Initializing` | Degraded |
 | Running with all known dependencies | `Running` / `Ready` | Healthy |
-| Running without guild data or zone runtime | `Running` / `Degraded` | Degraded |
+| Running without guild data or configured zones | `Running` / `Degraded` | Degraded |
 | Stopping or stopped | `Stopping` / `Stopped` | Unhealthy |
 | Startup/runtime failure | `Failed` / `Failed` | Unhealthy |
 
-Readiness blockers are explicit (`GuildDataUnavailable`, `ZoneRuntimeUnavailable`). There is no registered zone provider today, so startup does not claim full world readiness.
+Readiness blockers are explicit (`GuildDataUnavailable`, `ZoneRuntimeUnavailable`). The registered zone manager only satisfies the zone blocker when at least one configured zone has fully loaded and is running.
 
 ## Host startup sequence
 
@@ -71,7 +71,7 @@ There are no independently allocated world resources to dispose in this stage. M
 
 The original [`world.js`](../../world.js#L15-L40) starts the listener, begins zone loading and guild preparation, then emits `world_started`; zone queue completion separately emits `ready` ([`world.js`](../../world.js#L783-L806)). The original guild query callback is not awaited and returns after logging a query error ([`world.js`](../../world.js#L937-L962)). The C# host deliberately has an explicit lifecycle and awaited cancellable database read, while treating a guild-query failure as degraded rather than fatal. A MongoDB persistence-host startup failure occurs earlier and prevents world startup.
 
-The original cadence is a 100 ms `setInterval` with elapsed time derived from `process.hrtime` ([`GameStep.js`](../../GameStep.js#L5-L30)). The C# `WorldClock` uses `PeriodicTimer` and a measured monotonic delta. It currently waits for cancellation when the world snapshot is not fully ready; without the future zone readiness integration, the server does not run zone simulation.
+The original cadence is a 100 ms `setInterval` with elapsed time derived from `process.hrtime` ([`GameStep.js`](../../GameStep.js#L5-L30)). The C# `WorldClock` uses `PeriodicTimer` and a measured monotonic delta. It waits while the world snapshot is not fully ready. Prompt 14 supplies zone readiness, but zone ticks and simulation are still not connected.
 
 ## Concurrency assumptions
 

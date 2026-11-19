@@ -1,10 +1,12 @@
 using InfiniteSky.Application.Authentication;
 using InfiniteSky.Application.Guilds;
+using InfiniteSky.GameData.Zones;
 using InfiniteSky.Networking;
 using InfiniteSky.Persistence;
 using InfiniteSky.Server.Authentication;
 using InfiniteSky.Server.Configuration;
 using InfiniteSky.World;
+using InfiniteSky.World.Zones;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -77,6 +79,21 @@ public static class ServerHostBuilder
         builder.Services.AddSingleton<MongoPersistenceHostedService>();
         builder.Services.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<MongoPersistenceHostedService>());
+        builder.Services.AddSingleton<ZoneMetrics>();
+        builder.Services.AddSingleton<IZoneRegistry, ZoneRegistry>();
+        builder.Services.AddSingleton<IZoneResourceLoader>(provider =>
+        {
+            IHostEnvironment environment = provider.GetRequiredService<IHostEnvironment>();
+            return new LegacyZoneResourceLoader(Path.Combine(environment.ContentRootPath, "data"));
+        });
+        builder.Services.AddSingleton<ZoneManager>();
+        builder.Services.AddSingleton<IZoneManager>(
+            provider => provider.GetRequiredService<ZoneManager>());
+        builder.Services.AddSingleton<IWorldZoneReadiness>(
+            provider => provider.GetRequiredService<ZoneManager>());
+        builder.Services.AddSingleton<ZoneManagementHostedService>();
+        builder.Services.AddSingleton<IHostedService>(
+            provider => provider.GetRequiredService<ZoneManagementHostedService>());
         builder.Services.AddSingleton<WorldRuntime>();
         builder.Services.AddSingleton<WorldMetrics>();
         builder.Services.AddSingleton<WorldClock>();

@@ -54,6 +54,8 @@
 | R-043 | Fact | Item transformations and drop rates use undocumented magic values/duplicates | High | High | GP-022, GP-033 | deterministic fixtures, data audit, config/profile differences |
 | R-044 | Fact | `Mongoose`/`mongodb` and old Node dependencies are legacy-era and may not run on modern environments | High | Medium | INF-014, INT-014 | .NET migration removes runtime dependency; Node remains fixture/oracle only if reproducible |
 | R-045 | Assumption | .NET/C# numeric and allocation behavior will expose timing/ordering differences even when formulas match | Medium | High | WLD-001, GP-004..023, INT-009 | Golden deterministic traces, profile tick and load tests |
+| R-046 | Fact | The tracked data includes NPC/MOB spawns but no WREGION map-region assets; missing legacy files are treated as optional | High | High | DAT-008, ZON-001, ZON-003..004, INT-008 | Report missing resources as degraded health, keep portal/safe-region behavior unverified, require real deployment assets before client transfer tests |
+| R-047 | Fact | QuadTree query pruning uses a strict circle/cell intersection while candidate inclusion is inclusive and object-size unaware at the pruning stage | Medium | Medium | ZON-002, ZON-006, INT-002 | Preserve the observed boundary in LegacyParity tests; evaluate any corrected broad phase separately with client evidence |
 
 ## Highest-priority research and evidence
 

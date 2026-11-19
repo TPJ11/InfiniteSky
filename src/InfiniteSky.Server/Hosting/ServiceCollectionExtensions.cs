@@ -43,7 +43,10 @@ public static class ServiceCollectionExtensions
                 tags: ["readiness", "database"])
             .AddCheck<WorldHealthCheck>(
                 "world-readiness",
-                tags: ["readiness", "world"]);
+                tags: ["readiness", "world"])
+            .AddCheck<ZoneHealthCheck>(
+                "zones-readiness",
+                tags: ["readiness", "zones"]);
 
         return services;
     }

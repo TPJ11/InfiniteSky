@@ -13,14 +13,14 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 | Metric | Count |
 |---|---:|
-| Total features | 212 |
-| NOT_STARTED | 166 |
+| Total features | 214 |
+| NOT_STARTED | 162 |
 | IN_PROGRESS | 1 |
-| IMPLEMENTED | 31 |
+| IMPLEMENTED | 37 |
 | VERIFIED | 14 |
 | BLOCKED | 0 |
 | NOT_APPLICABLE | 0 |
-| Overall verified progress | 6.6% |
+| Overall verified progress | 6.5% |
 
 Known blocked research areas are not assigned `BLOCKED` status until their owner and blocker decision are formally recorded. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
@@ -37,13 +37,13 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Game data | 11 | 0 | 0 | 0 | 0% |
 | Domain | 15 | 10 | 0 | 0 | 0% |
 | World engine | 13 | 3 | 0 | 0 | 0% |
-| Zones/spatial | 8 | 0 | 0 | 0 | 0% |
+| Zones/spatial | 10 | 6 | 0 | 0 | 0% |
 | Entities/players | 8 | 0 | 0 | 0 | 0% |
 | Gameplay | 38 | 0 | 0 | 0 | 0% |
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **212** | **31** | **14** | **0** | **6.6%** |
+| **Total** | **214** | **37** | **14** | **0** | **6.5%** |
 
 ## Completed domain model work
 
@@ -104,11 +104,22 @@ This is not full persistence parity. Characters, counters, guild writes/repair, 
 ## World management foundation (Prompt 13)
 
 - Implemented the root server's single-world lifecycle, readiness reporting, and host ordering; no world ID, multi-world registry, or world selection was found in the root Node startup.
-- Added the source-backed 100 ms default cadence as validated `InfiniteSky:World:TickMilliseconds` configuration. The production clock remains idle while the world is degraded because no zone readiness provider exists.
+- Added the source-backed 100 ms default cadence as validated `InfiniteSky:World:TickMilliseconds` configuration. At the Prompt 13 checkpoint the production clock remained idle because no zone provider existed; Prompt 14 now supplies the real provider.
 - Added the asynchronous MongoDB guild bootstrap and the legacy guild field mapper. The inferred `guilds` collection name and live BSON compatibility remain unverified.
-- Added the `IWorldZoneReadiness` boundary without a fake zone or zone implementation. Networking/world entry, zone loading/simulation, players, and gameplay remain incomplete.
+- Added the `IWorldZoneReadiness` boundary without a fake zone. Prompt 14 now registers a static zone manager; networking/world entry, zone simulation, players, and gameplay remain incomplete.
 - `WLD-011..013` are `IMPLEMENTED`, not `VERIFIED`; tests establish unit/host integration behavior but do not establish original-client or live-database parity. See [WORLD_MANAGEMENT_IMPLEMENTATION.md](docs/migration/WORLD_MANAGEMENT_IMPLEMENTATION.md) and [WORLD_LIFECYCLE.md](docs/migration/WORLD_LIFECYCLE.md).
-- Validation: solution restore and build succeeded with zero warnings; 125 tests passed, 1 opt-in MongoDB test was skipped, and full-solution format verification passed. The game-data test project has no discoverable tests.
+- Validation from Prompt 13: solution restore and build succeeded with zero warnings; 125 tests passed, 1 opt-in MongoDB test was skipped, and full-solution format verification passed.
+
+## Zone management and spatial infrastructure (Prompt 14)
+
+- Added the exact 62-ID static catalog from `config.json-dist`; the default C# zone list remains empty and unknown IDs are not synthesized.
+- Added cancellable `.NPC` and signed `.WREGION` readers. Missing files remain optional as in the original loader; malformed files fail zone startup. NPC rows are parsed as definitions only; MOB population remains disabled.
+- Added zone lifecycle, bounded startup, registry/duplicate checks, clean shutdown of runtime-owned resources, X/Z QuadTree queries, source action-distance candidates, health, and metrics.
+- The zone manager now supplies `IWorldZoneReadiness` and starts before the world. Empty configuration remains degraded; a configured nonempty zone set can clear only the zone blocker, not guild/persistence blockers.
+- `ZON-001..003`, `ZON-006`, and `ZON-009..010` are `IMPLEMENTED`, not `VERIFIED`. `ZON-004..005` and `ZON-007..008` remain `NOT_STARTED`; this stage does not implement portals/transfers, entity spawning, safe-zone policy, terrain, or navigation.
+- The repository tracks 52 `.NPC` and 56 `.MOB` spawn files but has no `.WREGION` files. Region tests therefore use structure-derived fixtures and do not establish live map compatibility.
+- See [ZONE_MANAGEMENT_IMPLEMENTATION.md](docs/migration/ZONE_MANAGEMENT_IMPLEMENTATION.md), [ZONE_LIFECYCLE.md](docs/migration/ZONE_LIFECYCLE.md), [SPATIAL_SYSTEMS.md](docs/migration/SPATIAL_SYSTEMS.md), and [ZONE_VISIBILITY_AND_TRANSITIONS.md](docs/migration/ZONE_VISIBILITY_AND_TRANSITIONS.md).
+- Final Prompt 14 validation: `dotnet restore` succeeded; the complete solution built with zero warnings/errors; 144 tests passed and one opt-in MongoDB test was skipped; `dotnet format --verify-no-changes` passed. No original Node.js source or legacy game-data asset files changed.
 
 ## Outstanding domain gaps
 
@@ -127,7 +138,7 @@ The immediate critical path is:
 4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — character/BSON and safe save behavior.
 5. `NET-008..009`, `PER-003..012` — session transfer, character/gameplay persistence, and full schema compatibility.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
-7. `WLD-001..010`, `ZON-001..008`, `ENT-001..002` — zone readiness, actor/spatial ownership/state, and world behavior beyond the lifecycle foundation.
+7. `WLD-001..010`, `ZON-004..005`, `ZON-007..008`, `ENT-001..002` — zone actors, portal/transfer behavior, entity bootstrap, safe-region policy, terrain, and world behavior beyond the implemented management/spatial boundary.
 8. `INT-006..009` — real data/client compatibility and performance evidence.
 
 ## Blocked research areas
@@ -146,7 +157,7 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 
 ## Recommended next action
 
-The authentication/session foundation, account-persistence slice, and Prompt 13 world lifecycle/bootstrap foundation are implemented. Before production use, verify inferred collections and indexes, run the opt-in isolated MongoDB suite, and compare a sanitized representative BSON export. Full persistence and world parity remain incomplete; do not treat MongoDB connectivity or the lifecycle foundation as completion of character, zone, or gameplay persistence.
+The authentication/session foundation, account-persistence slice, Prompt 13 world lifecycle/bootstrap, and Prompt 14 zone-management/spatial infrastructure are implemented. Before production use, verify inferred collections and indexes, run the opt-in isolated MongoDB suite, compare sanitized representative BSON, and validate real WREGION files and original-client recipient behavior. Full persistence, entity, transfer, terrain, and gameplay parity remain incomplete. Do not begin Prompt 15 without explicit approval.
 
 ## Dependency warnings
 

@@ -152,24 +152,33 @@ flowchart TD
 
 **Evidence:** `WorldRuntimeTests`, `WorldClockTests`, `MongoGuildDocumentMapperTests`, and server host integration tests. These establish implementation and host behavior, not live-database or original-client parity; the matrix status remains `IMPLEMENTED`.
 
-**Limitations:** no source-backed world ID or world registry; no zone provider, world packet/session entry, player, or gameplay behavior. Production world readiness remains degraded until the zone stage supplies an actual provider.
+**Stage 5 exit limitations (before Prompt 14):** no source-backed world ID or world registry; no zone provider, world packet/session entry, player, or gameplay behavior. Prompt 14 supplies the zone provider; world readiness still depends on guild data and configured zones.
 
-## Stage 6 — Zone actors, persistence snapshots, and spatial index
+## Stage 6 — Zone actors, persistence snapshots, and spatial index (Prompt 14 foundation complete)
 
-**Features:** `WLD-001..010`, `ZON-001..008`, selected `PER-012`.
+**Features:** `WLD-001..010`, `ZON-001..010`, selected `PER-012`.
 
-**Work:**
+**Prompt 14 work completed:**
 
-- world clock/zone mailbox;
-- configured zone load;
-- quadtree/spatial interest;
-- region/portal/transfer;
-- actor-owned timers/snapshots;
-- lifecycle/shutdown.
+- source catalog and configured zone loading;
+- NPC/WREGION record readers;
+- lock-protected X/Z QuadTree and radius candidate queries;
+- zone lifecycle, registry, host ordering, readiness, health, and owned-resource shutdown.
+
+See the Prompt 14 zone management and spatial implementation report for evidence. Implemented matrix rows remain `IMPLEMENTED`, not `VERIFIED`.
+
+**Validation:** `dotnet restore` succeeded, the complete solution build completed with zero warnings/errors, all 144 runnable tests passed (one opt-in MongoDB test skipped), and `dotnet format --verify-no-changes --no-restore` passed.
+
+**Remaining stage work:**
+
+- zone actor/mailbox and actor-owned mutable entities;
+- portal resolution and transfer integration;
+- player/NPC/item/monster membership and entity bootstrap;
+- visibility output, timers, persistence snapshots, movement, terrain, and simulation.
 
 **Dependencies:** Stage 5 and `DAT-007..008`.
 
-This zone/spatial stage is the next separate migration stage (Prompt 14). Prompt 13 does not implement any of its zone loading, actor, spatial, movement, or simulation work.
+Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplies the static zone-management/spatial foundation; the remaining stage work is still dependent on entity and world-entry stages. Do not begin Prompt 15 without explicit approval.
 
 **Exit criteria:** zones load, clients transfer, radius queries are deterministic, no actor blocks on Mongo, and graceful shutdown drains state.
 

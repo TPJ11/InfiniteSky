@@ -33,6 +33,6 @@ MongoDB connection strings and database credentials must continue to be supplied
 
 ## Deliberate omissions
 
-No world name/ID, capacity, availability, discovery, dynamic-world, zone list, or world-selection setting is introduced. Root `world.js` does not use a world ID or server registry; its zones come from root `config.Zones`, which belongs to the zone-management stage. The C# world is therefore a singleton with only the tick interval and existing persistence boundary configured.
+No world name/ID, capacity, availability, discovery, dynamic-world, or world-selection setting is introduced. Root `world.js` does not use a world ID or server registry; selected zone IDs are configured separately through `InfiniteSky:Zones:Load`. The C# world remains a singleton with the existing persistence boundary.
 
 The guild query failure behavior is non-fatal after the MongoDB persistence host has started: world initialization continues with `GuildDataUnavailable` readiness degradation, matching the original bootstrap's log-and-return behavior. A MongoDB connection/startup failure from the persistence host still fails overall host startup before world initialization. If persistence is disabled, guild data is unavailable rather than an invented empty-but-ready dataset.

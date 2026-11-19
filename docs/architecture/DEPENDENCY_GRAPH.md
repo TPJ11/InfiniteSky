@@ -16,6 +16,7 @@ flowchart BT
 
     Protocol --> Domain
     GameData --> Domain
+    GameData --> Protocol
     Persistence --> Domain
     World --> Domain
     World --> Protocol

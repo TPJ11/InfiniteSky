@@ -189,6 +189,29 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
             failures.Add("InfiniteSky:Zones:Load may not contain duplicate zone IDs.");
         }
 
+        if (options.Zones.AsyncLoadLimit is < 1 or > 128)
+        {
+            failures.Add("InfiniteSky:Zones:AsyncLoadLimit must be between 1 and 128.");
+        }
+
+        if (options.Zones.QuadTreeDepth is < 1 or > 32)
+        {
+            failures.Add("InfiniteSky:Zones:QuadTreeDepth must be between 1 and 32.");
+        }
+
+        if (options.Zones.QuadTreeLimit < 1)
+        {
+            failures.Add("InfiniteSky:Zones:QuadTreeLimit must be positive.");
+        }
+
+        if (!double.IsFinite(options.Zones.ViewableActionDistance)
+            || options.Zones.ViewableActionDistance < 0
+            || options.Zones.ViewableActionDistance > int.MaxValue)
+        {
+            failures.Add(
+                "InfiniteSky:Zones:ViewableActionDistance must be finite and between 0 and Int32.MaxValue.");
+        }
+
         if (!string.Equals(options.Gameplay.CompatibilityProfile, "LegacyParity", StringComparison.Ordinal)
             && !string.Equals(options.Gameplay.CompatibilityProfile, "Corrected", StringComparison.Ordinal))
         {

@@ -83,6 +83,7 @@ flowchart TB
     PersistenceAdapter --> PersistencePorts
     PersistenceAdapter --> Domain
     GameDataAdapter --> Domain
+    GameDataAdapter --> Protocol
     Protocol --> Domain
     Scripting --> World
 ```
@@ -211,6 +212,10 @@ Each zone independently advances:
 7. persistence checkpoint requests.
 
 Timers are zone-owned. Avoid thousands of independent `Task.Delay` loops for monsters/items. Store absolute monotonic expiration times in priority collections or sorted timers.
+
+### Staged zone ownership
+
+The actor/mailbox remains the target for network-driven entity mutation. During the zone-management stage, the only mutable per-zone structure is the QuadTree; its operations are protected by a zone-local lock and return copied query results. No mailbox is introduced before there are zone commands to serialize. The player/entity stage must move those mutations under actor ownership or explicitly re-evaluate this staged boundary before adding them.
 
 ### World/runtime compatibility mode
 

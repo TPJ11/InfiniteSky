@@ -84,7 +84,7 @@ Contains:
 - raw unknown-field retention;
 - catalog builder returning immutable indexes.
 
-Dependencies: `InfiniteSky.Domain`.
+Dependencies: `InfiniteSky.Domain`, `InfiniteSky.Protocol` for shared little-endian record readers and legacy spawn/WREGION structures. This dependency is one-way; Protocol does not depend on GameData.
 
 ### `InfiniteSky.Persistence`
 

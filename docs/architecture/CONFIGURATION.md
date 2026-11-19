@@ -25,7 +25,7 @@ All server options bind from `InfiniteSky`.
 | `Networking` | bind address, login/world ports, and listener bounds; listeners disabled by default |
 | `Database` | provider and secret connection string; disabled in this stage |
 | `World` | legacy tick interval |
-| `Zones` | future zone IDs |
+| `Zones` | selected legacy zone IDs, bounded load concurrency, QuadTree depth/limit, action candidate distance |
 | `Gameplay` | `LegacyParity` or `Corrected` |
 | `Logging` | Microsoft logging levels/categories |
 
@@ -40,6 +40,7 @@ The tracked configuration:
 - sets world tick to 100 ms for future compatibility;
 - leaves network/database disabled by default;
 - loads no zones;
+- uses the legacy zone load defaults (concurrency 4, QuadTree depth 6, node limit 10, action distance 500);
 - selects `LegacyParity`.
 
 ## Validation
@@ -48,7 +49,7 @@ The tracked configuration:
 
 - blank application/diagnostic names;
 - invalid shutdown/tick values, network address/ports, or connection limits;
-- invalid/duplicate zone IDs;
+- nonpositive/duplicate zone IDs and invalid zone-loading/spatial settings;
 - unsupported gameplay profiles;
 - database enabled before a persistence adapter exists.
 
@@ -69,6 +70,10 @@ Database values are represented only as configuration placeholders. Do not commi
 ## Authentication
 
 `InfiniteSky:Authentication:TimeoutSeconds` defaults to 15 seconds and must be between 1 and 300. It bounds account lookup and session establishment only; it is not an authenticated-session expiry setting. No production account repository is configured yet, so the Server reports authentication as unavailable rather than accepting accounts from a test or in-memory store.
+
+## Zone loading
+
+`InfiniteSky:Zones:Load` is an empty array by default. Populate it only with IDs in the source catalog. The host resolves data relative to its content root and treats absent NPC/WREGION files as optional. Zone topology and resource paths are startup-only.
 
 ## Reload policy
 

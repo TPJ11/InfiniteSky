@@ -20,4 +20,10 @@
     <ProjectReference Include="..\..\src\InfiniteSky.GameData\InfiniteSky.GameData.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\data\spawninfo\001.NPC"
+          Link="data\spawninfo\001.NPC"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
