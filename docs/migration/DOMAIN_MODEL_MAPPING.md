@@ -73,6 +73,8 @@ Sources: `db/character.js`, `generic/CharacterState.js`, `generic/new_character_
 
 Character and Account are classes so two instances representing the same IDs are not automatically value-equal. This preserves runtime object identity.
 
+Prompt 15 adds a raw-BSON character mapper for the domain fields in the table. The mapper preserves supported array order/null slots and the repository only uses targeted updates; it is not a full document serializer. Unknown `Mixed` fields such as `MonstersKilled` remain in MongoDB but are not available in the current `Character` model.
+
 ## Equipment and inventory
 
 Sources: `db/character.js`, `generic/structs.js`, `generic/CharacterState.js`.

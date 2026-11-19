@@ -1,0 +1,116 @@
+{
+  "_id": { "$numberDouble": "107" },
+  "AccountID": { "$numberInt": "17" },
+  "ServerName": "Development",
+  "Name": "PlayerFixture",
+  "GuildName": null,
+  "Title": "FixtureTitle",
+  "IsGM": { "$numberInt": "1" },
+  "Clan": { "$numberInt": "2" },
+  "Gender": { "$numberInt": "1" },
+  "Hair": { "$numberInt": "4" },
+  "Face": { "$numberInt": "7" },
+  "Level": { "$numberInt": "12" },
+  "Experience": { "$numberDouble": "1234" },
+  "OtherIngame": { "$numberInt": "5" },
+  "StatBonus": { "$numberInt": "6" },
+  "Honor": { "$numberInt": "7" },
+  "SkillPoints": { "$numberInt": "8" },
+  "StatPoints": { "$numberInt": "9" },
+  "PlayTime": { "$numberInt": "10" },
+  "CP": { "$numberInt": "11" },
+  "StatStrength": { "$numberInt": "12" },
+  "StatChi": { "$numberInt": "13" },
+  "StatDexterity": { "$numberInt": "14" },
+  "StatVitality": { "$numberInt": "15" },
+  "Ring": null,
+  "Armor": {
+    "ID": { "$numberInt": "103" },
+    "Enchant": { "$numberInt": "4" },
+    "Combine": { "$numberInt": "2" }
+  },
+  "CalbashBottle": {
+    "ID": { "$numberInt": "26" },
+    "Enchant": { "$numberInt": "1" },
+    "Combine": { "$numberInt": "0" }
+  },
+  "Pet": {
+    "ID": { "$numberInt": "901" },
+    "Activity": { "$numberInt": "200" },
+    "Growth": { "$numberInt": "3" }
+  },
+  "StorageUse": { "$numberInt": "1" },
+  "Silver": { "$numberInt": "50000" },
+  "StorageSilver": { "$numberInt": "100" },
+  "BankSilver": { "$numberInt": "200" },
+  "SilverBig": { "$numberInt": "0" },
+  "Inventory": [
+    {
+      "ID": { "$numberInt": "2" },
+      "Column": { "$numberInt": "1" },
+      "Row": { "$numberInt": "0" },
+      "Amount": { "$numberInt": "11" },
+      "Enchant": { "$numberInt": "2" }
+    },
+    null
+  ],
+  "QuickUseItems": [
+    {
+      "ID": { "$numberInt": "2" },
+      "Ammount": { "$numberInt": "4" }
+    },
+    {
+      "ID": { "$numberInt": "26" },
+      "Amount": { "$numberInt": "5" }
+    }
+  ],
+  "SkillList": [
+    {
+      "ID": { "$numberInt": "1" },
+      "Level": { "$numberInt": "2" }
+    }
+  ],
+  "Skills": [],
+  "SkillBar": [
+    {
+      "ID": { "$numberInt": "2" },
+      "Level": { "$numberInt": "1" }
+    }
+  ],
+  "Storage": [
+    {
+      "ID": { "$numberInt": "3" },
+      "Amount": { "$numberInt": "99" }
+    }
+  ],
+  "Friends": ["FriendFixture"],
+  "MapID": { "$numberInt": "1" },
+  "RealX": { "$numberDouble": "-630.7" },
+  "RealY": { "$numberDouble": "50.2" },
+  "RealZ": { "$numberDouble": "-815.9" },
+  "Health": { "$numberDouble": "800.5" },
+  "Chi": null,
+  "StrBonus": { "$numberInt": "1" },
+  "DexBonus": { "$numberInt": "2" },
+  "LuckBuff": { "$numberInt": "3" },
+  "StrengthBuff": { "$numberInt": "4" },
+  "ExperienceBuff": { "$numberInt": "5" },
+  "AutoPillHP": { "$numberInt": "6" },
+  "AutoPillChi": { "$numberInt": "7" },
+  "ElementalDamage": { "$numberInt": "8" },
+  "ElementalDefense": { "$numberInt": "9" },
+  "DarkDamage": { "$numberInt": "10" },
+  "FactionDefenseBonus": { "$numberInt": "11" },
+  "ChanceDodge_Hit": { "$numberInt": "12" },
+  "DamageBonus": { "$numberInt": "13" },
+  "Daily1": { "$numberInt": "14" },
+  "DailyPvPKill": { "$numberInt": "15" },
+  "DailyUnknown": { "$numberInt": "16" },
+  "DailyUnknown2": { "$numberInt": "17" },
+  "LastUpdated": { "$date": "2021-08-03T12:34:56Z" },
+  "Deaths": { "$numberInt": "3" },
+  "UnmappedLegacyField": {
+    "nested": true,
+    "values": [1, 2, 3]
+  }
+}

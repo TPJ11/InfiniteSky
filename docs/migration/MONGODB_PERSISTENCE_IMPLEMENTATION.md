@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-Prompt 12 added MongoDB infrastructure and the production account-authentication repository. Prompt 13 adds a narrow, read-only guild bootstrap for the single world runtime. Character, counter, guild writes, email, inventory, bank, gameplay, and world-state persistence remain unimplemented. The original Node.js source and any MongoDB data are unchanged.
+Prompt 12 added MongoDB infrastructure and the production account-authentication repository. Prompt 13 adds a narrow, read-only guild bootstrap for the single world runtime. Prompt 15 adds a raw-BSON character read mapper/repository and targeted saved-world-location update. Counter allocation, full character round-trip, guild writes, email, inventory, bank, gameplay, and broader world-state persistence remain unimplemented. The original Node.js source and any MongoDB data are unchanged.
 
 The official `MongoDB.Driver` package is pinned centrally at `3.14.0`. No production MongoDB server version was found in the repository or available for inspection, so this implementation does not claim a production minimum. The opt-in container test currently targets MongoDB `7.0`.
 
@@ -18,17 +18,21 @@ The official `MongoDB.Driver` package is pinned centrally at `3.14.0`. No produc
 | Reset on legacy zone-transfer logout | [`db/account.js:30-48`](../../db/account.js) | Prompt 11 continues to call `SetActiveAsync(false)` only for the existing rollback/logout paths; ordinary login disconnect does not clear the persistent field. |
 | Account username uniqueness | [`db/account.js:11-27`](../../db/account.js) | Startup verifies the unique ascending `Username` index. It creates the `Username_1` index only when configured and missing; it never drops or modifies an index. |
 | Load guilds for the world bootstrap | [`db/guild.js:6-14`](../../db/guild.js), [`world.js:937-962`](../../world.js) | `MongoGuildRepository` asynchronously reads and maps the configured guild collection. Query failures degrade world readiness; guild writes and gameplay-facing methods remain future work. |
+| Load account-owned characters | [`packets/login/handleLogin.js`](../../packets/login/handleLogin.js), [`db/character.js`](../../db/character.js) | `MongoCharacterRepository` filters by `AccountID` and `ServerName`, maps at most three raw BSON documents, and preserves Mongo's natural result order. |
+| Load selected character by owner | [`packets/login/handleGameStart.js`](../../packets/login/handleGameStart.js) | `GetOwnedAsync` filters by `_id`, `AccountID`, and `ServerName`; foreign and missing characters both return `null`. |
+| Save location on disconnect | [`world.js:540-568`](../../world.js), [`db/character.js`](../../db/character.js) | `$set` only `MapID` and `RealX/Y/Z`; coordinates truncate toward zero. It does not update HP/Chi or replace the document. |
 | Connection failure and shutdown | [`db.js:32-45`](../../db.js) | Startup fails with a sanitized category; periodic bounded probes update health; DI disposes the singleton client on host shutdown. No application-level retry is added. |
 
 The Node package declares `mongoose: ">=3.8.8"` ([`package.json:29`](../../package.json)) without a lockfile. The root configuration names database `ts1` but contains a legacy connection-string example; it is not copied into C# configuration or documentation ([`config.json-dist:29-35`](../../config.json-dist)). The actual MongoDB server version, authentication database, deployed collection names, index inventory, and representative account BSON were not available.
 
 ## Composition and lifecycle
 
-- `ServerHostBuilder` projects strongly typed `DatabaseOptions` into `MongoPersistenceSettings`, including account and guild collection names.
+- `ServerHostBuilder` projects strongly typed `DatabaseOptions` into `MongoPersistenceSettings`, including account, character, and guild collection names.
 - `MongoPersistenceContext` owns one thread-safe `MongoClient` and `IMongoDatabase`. Driver read/write retries are disabled; all repository and bootstrap operations use cancellation and bounded tokens.
 - `MongoPersistenceHostedService` runs after foundation initialization and before network listeners. When persistence is enabled it pings the selected database, verifies/creates the account index according to configuration, optionally resets all account `active` fields, then starts periodic health probes.
 - The production `IAccountAuthenticationRepository` registration resolves to `MongoAccountAuthenticationRepository`. There is no in-memory or unavailable production fallback.
 - The production `IGuildRepository` registration resolves to `MongoGuildRepository`. The world host reads guilds after persistence-host startup and before network listeners. If the guild query fails after persistence startup, the world reports degraded readiness; if persistence startup itself fails, the host does not proceed to world startup.
+- The production `ICharacterRepository` registration resolves to `MongoCharacterRepository`. Character reads remain unavailable when MongoDB is disabled; the host does not use a fake or in-memory persistence fallback.
 - When persistence is disabled (the default), no MongoDB client is created, the database health check reports `Degraded`, and authentication fails closed with `CannotAuthenticate`.
 - Invalid enabled settings fail option validation or context construction without printing the URI. An unreachable server, authentication/authorization failure, incompatible index, missing index, malformed account, duplicate key, BSON failure, and cancellation are classified separately where applicable.
 
@@ -45,7 +49,7 @@ The account repository implements only the Prompt 11 contract:
 - `active` update for a single numeric account `_id`;
 - the source-backed startup reset operation.
 
-The separate guild repository implements only the Prompt 13 read path. It reads raw BSON and maps legacy guild bootstrap fields; it does not save guild state or implement guild packet/gameplay operations. See [`WORLD_MANAGEMENT_IMPLEMENTATION.md`](WORLD_MANAGEMENT_IMPLEMENTATION.md).
+The separate guild repository implements only the Prompt 13 read path. It reads raw BSON and maps legacy guild bootstrap fields; it does not save guild state or implement guild packet/gameplay operations. The character repository implements only the Prompt 15 selection/activation boundary and location save, not full character document round-tripping or gameplay writes. See [`WORLD_MANAGEMENT_IMPLEMENTATION.md`](WORLD_MANAGEMENT_IMPLEMENTATION.md) and [`CHARACTER_PERSISTENCE.md`](CHARACTER_PERSISTENCE.md).
 
 It reads raw `BsonDocument` values and does not register global conventions or BSON class maps. Unknown fields and nested legacy structures are therefore not deserialized into C# classes or rewritten. Account IDs accept BSON `Int32`, `Int64`, and integral finite `Double` values; unsupported, fractional, negative, or out-of-range values are treated as malformed. The active flag is written as `Int32`, matching the schema's numeric field and integral Node updates; confirm this choice against a representative database export before claiming complete BSON parity.
 
@@ -70,10 +74,11 @@ The source contains no explicit application retry policy. The C# driver has auto
 ## Tests and verification
 
 - BSON fixture: [`legacy-account-document.json`](../../tests/InfiniteSky.Persistence.Tests/Fixtures/legacy-account-document.json) is a synthetic fixture based on the source schema, not a database export.
-- Unit tests cover raw BSON mapping/round-trip, BSON numeric identifiers, missing and null credentials, malformed data, error classification, disabled configuration, URI/database mismatch, and log redaction.
+- Character BSON fixture: [`legacy-character-document.json`](../../tests/InfiniteSky.Persistence.Tests/Fixtures/legacy-character-document.json) is synthetic and covers only fields represented by the current domain model.
+- Unit tests cover raw BSON mapping, numeric identifiers, missing/null fields, sparse arrays, malformed data, error classification, disabled configuration, URI/database mismatch, and log redaction.
 - Server integration tests cover DI binding, invalid configuration, disabled health reporting, and unreachable MongoDB startup/health classification.
-- The Testcontainers integration test is opt-in with `INFINITESKY_RUN_MONGODB_INTEGRATION_TESTS=true`. It covers account index/lookup/update/reset behavior and reads a synthetic guild document through `MongoGuildRepository`.
-- The latest `dotnet restore InfiniteSky.sln` and `dotnet build InfiniteSky.sln --no-restore` pass. The MongoDB container test was skipped because the opt-in environment variable was not set. No live database compatibility claim is made.
+- Testcontainers integration tests are opt-in with `INFINITESKY_RUN_MONGODB_INTEGRATION_TESTS=true`. They cover account index/lookup/update/reset behavior, synthetic guild loading, character ownership, targeted location saves, and unknown-field preservation.
+- Prompt 15 validation: restore succeeded, the complete solution built with zero warnings/errors, all 156 runnable tests passed, and two MongoDB integration tests were skipped. Docker is not installed in the current environment, so no live MongoDB compatibility claim is made. Full-solution format verification passed.
 
 Run the isolated test where Docker is available:
 
@@ -85,4 +90,4 @@ Remove-Item Env:\INFINITESKY_RUN_MONGODB_INTEGRATION_TESTS
 
 ## Deferred persistence
 
-The original character, counter, guild writes, email, bank, inventory, and gameplay operations remain unmigrated. No collection is dropped, renamed, rewritten, bulk-converted, or seeded. `PER-003` through `PER-012` and full persistence parity remain incomplete.
+Character loading and targeted location saves do not establish full `PER-003` compatibility: unknown Mixed fields are read but not represented, there is no production BSON fixture, and no whole-document round trip is supported. Counter, guild writes, email, bank, inventory, and gameplay operations remain unmigrated. No collection is dropped, renamed, rewritten, bulk-converted, or seeded. `PER-004` through `PER-012` and full persistence parity remain incomplete.

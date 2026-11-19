@@ -178,9 +178,21 @@ See the Prompt 14 zone management and spatial implementation report for evidence
 
 **Dependencies:** Stage 5 and `DAT-007..008`.
 
-Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplies the static zone-management/spatial foundation; the remaining stage work is still dependent on entity and world-entry stages. Do not begin Prompt 15 without explicit approval.
+Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplied the static zone-management/spatial foundation. Prompt 15 is approved and its internal player/entity infrastructure is documented below; network world entry and the remaining actor simulation are still incomplete.
 
 **Exit criteria:** zones load, clients transfer, radius queries are deterministic, no actor blocks on Mongo, and graceful shutdown drains state.
+
+## Prompt 15 — Player and entity infrastructure
+
+**Features:** `ENT-009..021`, partial `PER-003`, `GP-002`, and `GP-003` boundaries.
+
+**Implemented:** account/server-scoped character loading; supported-field raw BSON mapping; targeted saved-location persistence; session-verified character activation; separate persistent and zone-local IDs; duplicate-safe player registry; atomic spatial registration/update/removal; nearby-player candidates; disconnect/shutdown location saves; and host/zone cleanup ordering.
+
+**Evidence:** focused mapper, player-manager, activation, shutdown-order, DI, and optional MongoDB container tests. The full character document and client protocol are not verified; `ENT-020` and `ENT-021` remain `BLOCKED`, and `PER-003` remains `IN_PROGRESS`.
+
+**Known blockers:** no full Character wire codec or source packet fixture, no .NET derived-stat calculator, no representative production BSON, no client character/world packet handler, and no real network disconnect-to-player cleanup wiring. Do not invent fallback locations or spawn/gameplay state.
+
+**Validation record:** `dotnet restore InfiniteSky.sln` succeeded; full solution build passed with zero warnings/errors; 156 tests passed and two opt-in MongoDB tests were skipped; full solution format verification passed. Docker is unavailable, so no live MongoDB result is claimed.
 
 ## Stage 7 — Entities, players, movement, and state replication
 
@@ -188,11 +200,11 @@ Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplies the sta
 
 **Work:**
 
-- player/monster/NPC/item actors;
-- ID allocator/target resolver;
-- state projectors;
-- legacy movement;
-- area interest and disconnect cleanup;
+- protocol-connected player actor/state replication and client-visible IDs;
+- NPC/monster/item runtime actors and target resolution;
+- derived state projectors and HP/Chi/gameplay updates;
+- legacy movement and area notification packets;
+- network disconnect/transfer integration beyond Prompt 15's internal cleanup boundary;
 - corrected movement behind profile.
 
 **Dependencies:** Stage 6 and action/entity codecs.

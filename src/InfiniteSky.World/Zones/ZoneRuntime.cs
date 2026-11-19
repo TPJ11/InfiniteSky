@@ -1,3 +1,4 @@
+using InfiniteSky.Domain.Identifiers;
 using InfiniteSky.Domain.Values;
 using InfiniteSky.Domain.Zones;
 using InfiniteSky.GameData.Zones;
@@ -158,7 +159,73 @@ public sealed class ZoneRuntime
     public IReadOnlyList<SpatialObjectSnapshot> QueryActionCandidates(
         Position3 center,
         IReadOnlySet<string>? types = null)
-        => RequireSpatialIndex().Query(center, _options.ViewableActionDistance, types);
+    {
+        lock (_sync)
+        {
+            if (_state != ZoneLifecycleState.Running)
+            {
+                return [];
+            }
+
+            return RequireSpatialIndex().Query(center, _options.ViewableActionDistance, types);
+        }
+    }
+
+    /// <summary>
+    /// Adds a spatial object and publishes its owner while zone shutdown is excluded.
+    /// </summary>
+    public bool TryRegisterSpatialObject(
+        Position3 position,
+        string type,
+        double size,
+        Func<EntityId, bool> publish)
+    {
+        ArgumentNullException.ThrowIfNull(publish);
+        lock (_sync)
+        {
+            if (_state != ZoneLifecycleState.Running || _spatialIndex is null)
+            {
+                return false;
+            }
+
+            EntityId id = _spatialIndex.Add(position, type, size);
+            try
+            {
+                if (publish(id))
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                _ = _spatialIndex.Remove(id);
+                throw;
+            }
+
+            _ = _spatialIndex.Remove(id);
+            return false;
+        }
+    }
+
+    public bool TryUpdateSpatialObject(EntityId id, Position3 position)
+    {
+        lock (_sync)
+        {
+            return _state == ZoneLifecycleState.Running
+                && _spatialIndex is not null
+                && _spatialIndex.Update(id, position);
+        }
+    }
+
+    public bool TryRemoveSpatialObject(EntityId id)
+    {
+        lock (_sync)
+        {
+            return _state == ZoneLifecycleState.Running
+                && _spatialIndex is not null
+                && _spatialIndex.Remove(id);
+        }
+    }
 
     private async Task InitializeCoreAsync(CancellationToken cancellationToken)
     {

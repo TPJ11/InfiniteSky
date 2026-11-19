@@ -10,6 +10,7 @@ public enum MongoPersistenceFailureKind
     Authentication,
     Unavailable,
     AccountNotFound,
+    CharacterNotFound,
     DuplicateKey,
     Serialization,
     MalformedDocument,

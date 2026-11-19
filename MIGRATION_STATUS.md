@@ -4,7 +4,7 @@
 
 This file is the authoritative dashboard for the .NET 10 migration. Update it only from the feature matrix and linked test evidence.
 
-- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, and MongoDB account-persistence slice are implemented where evidence supports it. Full database, world, and gameplay migration remains incomplete.
+- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Full packet, entity simulation, database, and gameplay migration remains incomplete.
 - A feature may be `VERIFIED` only after its test/acceptance evidence exists and is linked.
 - `IMPLEMENTED` is not `VERIFIED`.
 - Blockers are documented below, in the matrix notes, and in `docs/migration/MIGRATION_RISKS.md`.
@@ -13,37 +13,37 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 | Metric | Count |
 |---|---:|
-| Total features | 214 |
-| NOT_STARTED | 162 |
-| IN_PROGRESS | 1 |
-| IMPLEMENTED | 37 |
+| Total features | 227 |
+| NOT_STARTED | 161 |
+| IN_PROGRESS | 2 |
+| IMPLEMENTED | 48 |
 | VERIFIED | 14 |
-| BLOCKED | 0 |
+| BLOCKED | 2 |
 | NOT_APPLICABLE | 0 |
-| Overall verified progress | 6.5% |
+| Overall verified progress | 6.2% |
 
-Known blocked research areas are not assigned `BLOCKED` status until their owner and blocker decision are formally recorded. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
+Prompt 15 records full character/world protocol integration and full original-client player/entity compatibility as `BLOCKED` in the matrix because required codecs, derived stats, fixtures, and client evidence are absent. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
 ## Subsystem progress
 
 | Subsystem | Total | Implemented | Verified | Blocked | Progress |
 |---|---:|---:|---:|---:|---:|
-| Infrastructure | 18 | 3 | 4 | 0 | 22.2% |
+| Infrastructure | 18 | 3 | 4 | 0 | 38.9% |
 | Networking | 10 | 3 | 3 | 0 | 60% |
-| Protocol | 33 | 2 | 7 | 0 | 27.3% |
+| Protocol | 33 | 2 | 5 | 0 | 21.2% |
 | Authentication | 4 | 2 | 2 | 0 | 100% |
 | Sessions | 3 | 3 | 0 | 0 | 100% |
 | Persistence | 14 | 5 | 0 | 0 | 35.7% |
 | Game data | 11 | 0 | 0 | 0 | 0% |
-| Domain | 15 | 10 | 0 | 0 | 0% |
-| World engine | 13 | 3 | 0 | 0 | 0% |
-| Zones/spatial | 10 | 6 | 0 | 0 | 0% |
-| Entities/players | 8 | 0 | 0 | 0 | 0% |
+| Domain | 15 | 10 | 0 | 0 | 66.7% |
+| World engine | 13 | 3 | 0 | 0 | 23.1% |
+| Zones/spatial | 10 | 6 | 0 | 0 | 60% |
+| Entities/players | 21 | 11 | 0 | 2 | 52.4% |
 | Gameplay | 38 | 0 | 0 | 0 | 0% |
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **214** | **37** | **14** | **0** | **6.5%** |
+| **Total** | **227** | **48** | **14** | **2** | **27.3%** |
 
 ## Completed domain model work
 
@@ -54,7 +54,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 - Monster/NPC/world-item runtime entities and zone spawn/region descriptors.
 - 28 domain compatibility tests covering defaults, null/sparse arrays, identifiers, enum values, numerics, definitions, and identity.
 
-Full persistence mapping, world simulation, complete packet lifecycle, and gameplay algorithms remain `NOT_STARTED` or `IN_PROGRESS` as listed in the feature matrix.
+Full persistence round-trip, world simulation, complete packet lifecycle, and gameplay algorithms remain `NOT_STARTED`, `IN_PROGRESS`, or `BLOCKED` as listed in the feature matrix.
 
 ## Completed binary protocol work
 
@@ -99,7 +99,7 @@ Login character slots, world transfer, and distributed sessions remain incomplet
 - BSON fixture, mapping/config/DI/error/redaction tests, and an opt-in ephemeral Testcontainers integration test.
 - `dotnet restore` and full solution build pass. Runnable tests pass; the MongoDB container test is skipped unless `INFINITESKY_RUN_MONGODB_INTEGRATION_TESTS=true` is set. The fixture is synthetic, not a production database export.
 
-This is not full persistence parity. Characters, counters, guild writes/repair, email, banks, inventory, gameplay writes, save coordination, data comparison, and full original behavior remain incomplete. The inferred `account_mongooses` and `guilds` collection names, deployed index state, BSON numeric subtypes, server version, and authentication database must be confirmed before production use.
+This is not full persistence parity. Prompt 15 adds character reads and targeted saved-location writes only; whole-character round-trip, counters, guild writes/repair, email, banks, inventory, gameplay writes, save coordination, and data comparison remain incomplete. The inferred `account_mongooses`, `character_mongooses`, and `guilds` collection names, deployed index state, BSON numeric subtypes, server version, and authentication database must be confirmed before production use.
 
 ## World management foundation (Prompt 13)
 
@@ -121,11 +121,21 @@ This is not full persistence parity. Characters, counters, guild writes/repair, 
 - See [ZONE_MANAGEMENT_IMPLEMENTATION.md](docs/migration/ZONE_MANAGEMENT_IMPLEMENTATION.md), [ZONE_LIFECYCLE.md](docs/migration/ZONE_LIFECYCLE.md), [SPATIAL_SYSTEMS.md](docs/migration/SPATIAL_SYSTEMS.md), and [ZONE_VISIBILITY_AND_TRANSITIONS.md](docs/migration/ZONE_VISIBILITY_AND_TRANSITIONS.md).
 - Final Prompt 14 validation: `dotnet restore` succeeded; the complete solution built with zero warnings/errors; 144 tests passed and one opt-in MongoDB test was skipped; `dotnet format --verify-no-changes` passed. No original Node.js source or legacy game-data asset files changed.
 
+## Player and entity infrastructure (Prompt 15)
+
+- Added a Mongo character mapper/repository using raw BSON, account/server-scoped reads, the root three-character result limit, and targeted `MapID`/`RealX/Y/Z` updates. Unknown BSON fields are not deserialized or overwritten.
+- Added authenticated character listing/activation boundaries. Activation requires current session, matching account ownership, complete saved position/map, and a running zone; no automatic selection or fallback spawn is used.
+- Added a thread-safe player registry keyed separately by character, authentication session, world connection, and `(zone, EntityId)`. Runtime IDs remain `uint` and zone-local; persistent IDs are not reused as entity IDs.
+- Added atomic spatial registration with zone shutdown, player position update/removal, nearby-player candidate queries, disconnect snapshots, and graceful location save/cleanup before world and zones stop.
+- No client character/world packets, full Character wire codec, derived stats, HP/Chi mutation, real network disconnect hook, NPC/monster runtime spawning, or gameplay simulation were added. `ENT-020` and `ENT-021` remain `BLOCKED`; full `PER-003` remains `IN_PROGRESS`.
+- See [PLAYER_ENTITY_IMPLEMENTATION.md](docs/migration/PLAYER_ENTITY_IMPLEMENTATION.md), [ENTITY_LIFECYCLE.md](docs/migration/ENTITY_LIFECYCLE.md), [CHARACTER_PERSISTENCE.md](docs/migration/CHARACTER_PERSISTENCE.md), [PLAYER_SESSION_AND_WORLD_ENTRY.md](docs/migration/PLAYER_SESSION_AND_WORLD_ENTRY.md), and [ENTITY_VISIBILITY_INTEGRATION.md](docs/migration/ENTITY_VISIBILITY_INTEGRATION.md).
+- Prompt 15 verification: `dotnet restore InfiniteSky.sln` succeeded; the complete solution built with zero warnings/errors; all 156 runnable tests passed and the two opt-in MongoDB container tests were skipped; `dotnet format InfiniteSky.sln --verify-no-changes --no-restore` passed. Docker is unavailable, so no live MongoDB test or production BSON compatibility is claimed.
+
 ## Outstanding domain gaps
 
 - `MonstersKilled` has no typed key/usage evidence and remains deferred.
 - Packet character tails, NPC/monster unknown records, and quest state are not modeled.
-- Most domain models still lack persistence/protocol mappers; the MongoDB account-authentication adapter is a separate narrow raw-BSON slice. Affected matrix rows remain `IMPLEMENTED`, not `VERIFIED`.
+- Most domain models still lack persistence/protocol mappers; the character raw-BSON adapter is a narrow read/targeted-write slice with synthetic fixtures, not a full round-trip. Affected matrix rows remain `IMPLEMENTED` or `IN_PROGRESS`, not `VERIFIED`.
 - Numeric widths at packet boundaries require later adapter validation.
 
 ## Critical outstanding features
@@ -135,7 +145,7 @@ The immediate critical path is:
 1. `PRO-001..004`, `PRO-015`, `PRO-017`, `PRO-032` — framing and unresolved wire structures.
 2. `DAT-001..008` — original game data and world data readers.
 3. `DOM-007..008` and persistence/protocol mappings for implemented models — progression, stats, and boundary conversion.
-4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — character/BSON and safe save behavior.
+4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — full character/BSON round-trip and safe save behavior.
 5. `NET-008..009`, `PER-003..012` — session transfer, character/gameplay persistence, and full schema compatibility.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
 7. `WLD-001..010`, `ZON-004..005`, `ZON-007..008`, `ENT-001..002` — zone actors, portal/transfer behavior, entity bootstrap, safe-region policy, terrain, and world behavior beyond the implemented management/spatial boundary.
@@ -143,7 +153,7 @@ The immediate critical path is:
 
 ## Blocked research areas
 
-These are not yet formal `BLOCKED` statuses but are current evidence gaps:
+The following matrix features are explicitly `BLOCKED` or remain research gaps:
 
 - compressed state envelope and canonical `.pac` capture (`PRO-032..033`);
 - complete Character/world 0x17 tails (`PRO-015..017`);
@@ -152,12 +162,13 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 - quest protocol and data (`GP-025`);
 - generic NPC interaction packet/data (`GP-026`);
 - unsupported external plugins (`SCR-007`);
-- representative production BSON and client data (`INT-006`, `INT-008`);
+- representative production BSON and client data (`INT-006`, `INT-008`, `PER-003`);
+- complete Character/world packet integration and full player/entity compatibility (`ENT-020..021`);
 - supported scope of FruitSalad process/editor tooling (`INF-014..015`, `INT-011..012`).
 
 ## Recommended next action
 
-The authentication/session foundation, account-persistence slice, Prompt 13 world lifecycle/bootstrap, and Prompt 14 zone-management/spatial infrastructure are implemented. Before production use, verify inferred collections and indexes, run the opt-in isolated MongoDB suite, compare sanitized representative BSON, and validate real WREGION files and original-client recipient behavior. Full persistence, entity, transfer, terrain, and gameplay parity remain incomplete. Do not begin Prompt 15 without explicit approval.
+Prompt 15's internal player/entity infrastructure is implemented, with full wire compatibility explicitly blocked. Before production use, verify inferred collections and indexes, run the opt-in isolated MongoDB suite, compare sanitized representative BSON, and validate real WREGION files and original-client recipient behavior. Full persistence, entity simulation, transfer, terrain, and gameplay parity remain incomplete. Do not begin Prompt 16 without explicit approval.
 
 ## Dependency warnings
 

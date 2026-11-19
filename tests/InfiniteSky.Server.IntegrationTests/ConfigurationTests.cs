@@ -43,6 +43,8 @@ public sealed class ConfigurationTests
         Assert.Equal(120, options.Networking.IdleTimeoutSeconds);
         Assert.Equal(30, options.Networking.ConnectionShutdownTimeoutSeconds);
         Assert.False(options.Database.Enabled);
+        Assert.Equal("character_mongooses", options.Database.CharacterCollectionName);
+        Assert.Equal("Development", options.Characters.ServerName);
     }
 
     [Fact]
@@ -94,6 +96,32 @@ public sealed class ConfigurationTests
         ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
 
         Assert.True(result.Succeeded);
+    }
+
+    [Fact]
+    public void ValidatorRejectsMissingCharacterServerAndCollectionConfiguration()
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Characters = new CharactersOptions { ServerName = string.Empty },
+            Database = new DatabaseOptions
+            {
+                Enabled = true,
+                ConnectionString = "mongodb://localhost:27017/ts1",
+                CharacterCollectionName = string.Empty,
+            },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.NotNull(result.Failures);
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains("Characters:ServerName", StringComparison.Ordinal));
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains("Database:CharacterCollectionName", StringComparison.Ordinal));
     }
 
     [Theory]

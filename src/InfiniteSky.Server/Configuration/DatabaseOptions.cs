@@ -31,6 +31,12 @@ public sealed class DatabaseOptions
     public string AccountCollectionName { get; set; } = "account_mongooses";
 
     /// <summary>
+    /// Gets or sets the character collection name inferred from the legacy Mongoose model.
+    /// Verify this value against the deployed database before use.
+    /// </summary>
+    public string CharacterCollectionName { get; set; } = "character_mongooses";
+
+    /// <summary>
     /// Gets or sets the guild collection name. Verify this Mongoose-derived default against the deployment.
     /// </summary>
     public string GuildCollectionName { get; set; } = "guilds";

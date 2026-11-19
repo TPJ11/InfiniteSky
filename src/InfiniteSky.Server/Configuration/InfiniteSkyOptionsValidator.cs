@@ -41,6 +41,11 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
             failures.Add("InfiniteSky:Diagnostics:ServiceName is required.");
         }
 
+        if (string.IsNullOrWhiteSpace(options.Characters.ServerName))
+        {
+            failures.Add("InfiniteSky:Characters:ServerName is required.");
+        }
+
         if (options.Authentication.TimeoutSeconds is < 1 or > 300)
         {
             failures.Add("InfiniteSky:Authentication:TimeoutSeconds must be between 1 and 300.");
@@ -133,6 +138,12 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
                 || options.Database.AccountCollectionName.Contains('\0'))
             {
                 failures.Add("InfiniteSky:Database:AccountCollectionName must be a valid non-empty collection name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Database.CharacterCollectionName)
+                || options.Database.CharacterCollectionName.Contains('\0'))
+            {
+                failures.Add("InfiniteSky:Database:CharacterCollectionName must be a valid non-empty collection name.");
             }
 
             if (string.IsNullOrWhiteSpace(options.Database.GuildCollectionName)

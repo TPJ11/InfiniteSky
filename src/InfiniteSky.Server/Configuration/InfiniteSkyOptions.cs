@@ -41,6 +41,11 @@ public sealed class InfiniteSkyOptions
     public DatabaseOptions Database { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets character-shard selection options.
+    /// </summary>
+    public CharactersOptions Characters { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets world runtime options.
     /// </summary>
     public WorldOptions World { get; set; } = new();

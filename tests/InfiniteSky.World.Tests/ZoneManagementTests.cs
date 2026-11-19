@@ -1,10 +1,12 @@
 using System.Collections.Concurrent;
 
+using InfiniteSky.Domain.Characters;
 using InfiniteSky.Domain.Identifiers;
 using InfiniteSky.Domain.Values;
 using InfiniteSky.Domain.Zones;
 using InfiniteSky.GameData.Zones;
 using InfiniteSky.Protocol.Structures;
+using InfiniteSky.World.Players;
 using InfiniteSky.World.Spatial;
 using InfiniteSky.World.Zones;
 
@@ -212,12 +214,194 @@ public sealed class ZoneManagementTests
         Assert.Empty(registry.GetAll());
     }
 
+    [Fact]
+    public async Task PlayerManagerRegistersUpdatesAndRemovesZoneLocalPlayers()
+    {
+        using var zoneMetrics = new ZoneMetrics();
+        using var playerMetrics = new PlayerMetrics();
+        var zones = new ZoneManager(
+            new ZoneRegistry(),
+            new EmptyZoneResourceLoader(),
+            zoneMetrics);
+        await zones.StartAsync(
+            [Descriptor(1)],
+            new ZoneManagerOptions { ViewableActionDistance = 25 },
+            CancellationToken.None);
+        ZoneRuntime zone = Assert.Single(zones.GetZones());
+        var players = new PlayerManager(playerMetrics);
+        PlayerRuntime first = players.Activate(
+            Character(100, 17, new Position3(10, 0, 10)),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            zone);
+        PlayerRuntime second = players.Activate(
+            Character(101, 18, new Position3(12, 0, 12)),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            zone);
+
+        Assert.Equal(2, players.Count);
+        Assert.Equal(2, zone.SpatialObjectCount);
+        Assert.Equal(new EntityId(1), first.EntityId);
+        Assert.Equal(new EntityId(2), second.EntityId);
+        Assert.NotEqual((uint)first.Character.Id.Value, first.EntityId.Value);
+        Assert.Equal(PlayerLifecycleState.Active, first.State);
+        Assert.True(players.TryFindByCharacter(new CharacterId(100), out PlayerRuntime? byCharacter));
+        Assert.Same(first, byCharacter);
+        Assert.True(players.TryFindByEntity(new ZoneId(1), first.EntityId, out PlayerRuntime? byEntity));
+        Assert.Same(first, byEntity);
+        Assert.Single(players.GetNearbyPlayers(first));
+
+        Assert.True(players.TryUpdatePosition(second, new Position3(200, 0, 200)));
+        Assert.Equal(new Position3(200, 0, 200), second.Position);
+        Assert.Empty(players.GetNearbyPlayers(first));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => players.TryUpdatePosition(second, new Position3(60_000, 0, 60_000)));
+        Assert.Equal(new Position3(200, 0, 200), second.Position);
+
+        PlayerRuntimeSnapshot removed = Assert.IsType<PlayerRuntimeSnapshot>(
+            players.RemoveByWorldConnection(first.WorldConnectionId));
+        Assert.Equal(new CharacterId(100), removed.CharacterId);
+        Assert.Equal(PlayerLifecycleState.Removed, first.State);
+        Assert.Null(players.RemoveByWorldConnection(first.WorldConnectionId));
+        Assert.False(players.TryFindByCharacter(new CharacterId(100), out _));
+        Assert.Equal(1, zone.SpatialObjectCount);
+        Assert.Single(players.RemoveAll());
+        Assert.Equal(0, players.Count);
+        Assert.Equal(0, zone.SpatialObjectCount);
+
+        await zones.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task PlayerActivationRejectsDuplicatesAndRollsBackSpatialFailure()
+    {
+        using var zoneMetrics = new ZoneMetrics();
+        using var playerMetrics = new PlayerMetrics();
+        var zones = new ZoneManager(
+            new ZoneRegistry(),
+            new EmptyZoneResourceLoader(),
+            zoneMetrics);
+        await zones.StartAsync([Descriptor(1)], new ZoneManagerOptions(), CancellationToken.None);
+        ZoneRuntime zone = Assert.Single(zones.GetZones());
+        var players = new PlayerManager(playerMetrics);
+        Character character = Character(200, 17, new Position3(1, 0, 1));
+        Guid sessionId = Guid.NewGuid();
+        Guid connectionId = Guid.NewGuid();
+        _ = players.Activate(character, sessionId, connectionId, zone);
+
+        Assert.Throws<InvalidOperationException>(
+            () => players.Activate(character, Guid.NewGuid(), Guid.NewGuid(), zone));
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => players.Activate(
+                Character(201, 17, new Position3(60_000, 0, 60_000)),
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                zone));
+        Assert.Equal(1, players.Count);
+        Assert.Equal(1, zone.SpatialObjectCount);
+
+        Assert.Single(players.RemoveAll());
+        await zones.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task ConcurrentDuplicateCharacterActivationPublishesExactlyOnePlayer()
+    {
+        using var zoneMetrics = new ZoneMetrics();
+        using var playerMetrics = new PlayerMetrics();
+        var zones = new ZoneManager(
+            new ZoneRegistry(),
+            new EmptyZoneResourceLoader(),
+            zoneMetrics);
+        await zones.StartAsync([Descriptor(1)], new ZoneManagerOptions(), CancellationToken.None);
+        ZoneRuntime zone = Assert.Single(zones.GetZones());
+        var players = new PlayerManager(playerMetrics);
+        Character character = Character(300, 17, new Position3(1, 0, 1));
+        var activated = new System.Collections.Concurrent.ConcurrentBag<PlayerRuntime>();
+
+        Parallel.For(0, 16, _ =>
+        {
+            try
+            {
+                activated.Add(players.Activate(character, Guid.NewGuid(), Guid.NewGuid(), zone));
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        });
+
+        Assert.Single(activated);
+        Assert.Equal(1, players.Count);
+        Assert.Equal(1, zone.SpatialObjectCount);
+        Assert.Single(players.RemoveAll());
+        await zones.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task RuntimeEntityIdsRemainZoneLocalAndLookupsIncludeZoneIdentity()
+    {
+        using var zoneMetrics = new ZoneMetrics();
+        using var playerMetrics = new PlayerMetrics();
+        var zones = new ZoneManager(
+            new ZoneRegistry(),
+            new EmptyZoneResourceLoader(),
+            zoneMetrics);
+        await zones.StartAsync(
+            [Descriptor(1), Descriptor(2)],
+            new ZoneManagerOptions(),
+            CancellationToken.None);
+        ZoneRuntime[] runningZones = zones.GetZones().ToArray();
+        var players = new PlayerManager(playerMetrics);
+        PlayerRuntime first = players.Activate(
+            Character(401, 17, new Position3(1, 0, 1)),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            runningZones[0]);
+        Character secondCharacter = Character(402, 18, new Position3(1, 0, 1));
+        secondCharacter.SavedLocation = new SavedCharacterLocation
+        {
+            ZoneId = new ZoneId(2),
+            X = 1,
+            Y = 0,
+            Z = 1,
+        };
+        PlayerRuntime second = players.Activate(
+            secondCharacter,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            runningZones[1]);
+
+        Assert.Equal(first.EntityId, second.EntityId);
+        Assert.True(players.TryFindByEntity(new ZoneId(1), first.EntityId, out PlayerRuntime? firstByZone));
+        Assert.Same(first, firstByZone);
+        Assert.True(players.TryFindByEntity(new ZoneId(2), second.EntityId, out PlayerRuntime? secondByZone));
+        Assert.Same(second, secondByZone);
+        Assert.Empty(players.GetNearbyPlayers(first));
+
+        Assert.Equal(2, players.RemoveAll().Count);
+        await zones.StopAsync(CancellationToken.None);
+    }
+
     private static ZoneDescriptor Descriptor(int id)
         => new()
         {
             Id = new ZoneId(id),
             Name = $"Z{id:D3}",
             Load = true,
+        };
+
+    private static Character Character(long characterId, long accountId, Position3 position)
+        => new(new CharacterId(characterId), new AccountId(accountId), $"Character{characterId}")
+        {
+            SavedLocation = new SavedCharacterLocation
+            {
+                ZoneId = new ZoneId(1),
+                X = position.X,
+                Y = position.Y,
+                Z = position.Z,
+            },
+            Progression = new CharacterProgression { Level = 5 },
         };
 
     private sealed class EmptyZoneResourceLoader : IZoneResourceLoader

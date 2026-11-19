@@ -22,6 +22,7 @@ public sealed class MongoPersistenceException : Exception
             MongoPersistenceFailureKind.Authentication => "MongoDB authentication or authorization failed.",
             MongoPersistenceFailureKind.Unavailable => "MongoDB is unavailable.",
             MongoPersistenceFailureKind.AccountNotFound => "The account no longer exists.",
+            MongoPersistenceFailureKind.CharacterNotFound => "The character no longer exists.",
             MongoPersistenceFailureKind.DuplicateKey => "MongoDB rejected a duplicate key.",
             MongoPersistenceFailureKind.Serialization => "A MongoDB BSON serialization operation failed.",
             MongoPersistenceFailureKind.MalformedDocument => "A MongoDB document is malformed.",

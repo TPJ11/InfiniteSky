@@ -2,7 +2,7 @@
 
 ## Scope
 
-This stage implements in-process authenticated account sessions for the login connection. It does not implement character sessions, login-to-world transfer, reconnect recovery, distributed storage, or a persistent session table.
+This stage implements in-process authenticated account sessions for the login connection. Prompt 15 can bind that authenticated session ID to a loaded player runtime internally, but does not implement client character/world packets, login-to-world transfer, reconnect recovery, distributed storage, or a persistent session table.
 
 ## Identity and ownership
 
@@ -33,6 +33,8 @@ Per-connection synchronization permits only one authentication operation at a ti
 This policy is intentionally stricter than the Node login handler. Node checks `account.active` against a live world socket and lets a stale active flag through; this C# foundation instead treats any in-process session as authoritative. The exact legacy behavior cannot be reproduced until world-session lookup and login-to-world transfer are migrated. The policy is explicitly documented rather than treated as proven parity.
 
 There is no session replacement, recovery, or reconnect token behavior. Session IDs are not sent to clients and are used internally for association/diagnostics.
+
+The Prompt 15 `PlayerActivationService` resolves the session by login connection, loads only a character owned by its account and configured server, then rechecks the same session after database I/O. `PlayerRuntime` retains the generated session ID and world connection ID separately from character/account identity. Because world handshake packet handling is not implemented, this is an application boundary rather than a completed transfer-session protocol.
 
 ## Production and operational limitations
 

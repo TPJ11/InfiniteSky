@@ -1,11 +1,14 @@
 using InfiniteSky.Application.Authentication;
+using InfiniteSky.Application.Characters;
 using InfiniteSky.Application.Guilds;
+using InfiniteSky.Application.Players;
 using InfiniteSky.GameData.Zones;
 using InfiniteSky.Networking;
 using InfiniteSky.Persistence;
 using InfiniteSky.Server.Authentication;
 using InfiniteSky.Server.Configuration;
 using InfiniteSky.World;
+using InfiniteSky.World.Players;
 using InfiniteSky.World.Zones;
 
 using Microsoft.Extensions.Configuration;
@@ -55,6 +58,7 @@ public static class ServerHostBuilder
                 ConnectionString = database.ConnectionString,
                 DatabaseName = database.DatabaseName,
                 AccountCollectionName = database.AccountCollectionName,
+                CharacterCollectionName = database.CharacterCollectionName,
                 GuildCollectionName = database.GuildCollectionName,
                 EnsureIndexesOnStartup = database.EnsureIndexesOnStartup,
                 ResetActiveAccountsOnStartup = database.ResetActiveAccountsOnStartup,
@@ -76,6 +80,9 @@ public static class ServerHostBuilder
         builder.Services.AddSingleton<MongoGuildRepository>();
         builder.Services.AddSingleton<IGuildRepository>(
             provider => provider.GetRequiredService<MongoGuildRepository>());
+        builder.Services.AddSingleton<MongoCharacterRepository>();
+        builder.Services.AddSingleton<ICharacterRepository>(
+            provider => provider.GetRequiredService<MongoCharacterRepository>());
         builder.Services.AddSingleton<MongoPersistenceHostedService>();
         builder.Services.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<MongoPersistenceHostedService>());
@@ -100,6 +107,23 @@ public static class ServerHostBuilder
         builder.Services.AddSingleton<WorldHostedService>();
         builder.Services.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<WorldHostedService>());
+        builder.Services.AddSingleton<PlayerMetrics>();
+        builder.Services.AddSingleton<IPlayerManager, PlayerManager>();
+        builder.Services.AddSingleton<PlayerActivationService>(provider =>
+        {
+            InfiniteSkyOptions options =
+                provider.GetRequiredService<IOptions<InfiniteSkyOptions>>().Value;
+            return new PlayerActivationService(
+                provider.GetRequiredService<IAuthenticationSessionStore>(),
+                provider.GetRequiredService<ICharacterRepository>(),
+                provider.GetRequiredService<IPlayerManager>(),
+                provider.GetRequiredService<IZoneManager>(),
+                provider.GetRequiredService<PlayerMetrics>(),
+                options.Characters.ServerName);
+        });
+        builder.Services.AddSingleton<PlayerManagementHostedService>();
+        builder.Services.AddSingleton<IHostedService>(
+            provider => provider.GetRequiredService<PlayerManagementHostedService>());
         builder.Services.AddSingleton<AuthenticationMetrics>();
         builder.Services.AddSingleton<ICredentialVerifier, LegacyPlaintextCredentialVerifier>();
         builder.Services.AddSingleton<IAuthenticationSessionStore, InMemoryAuthenticationSessionStore>();

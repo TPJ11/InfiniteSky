@@ -2,49 +2,29 @@
 
 ## Scope and matrix coverage
 
-`ENT-001` through `ENT-008`: player, state projection, HP/Chi, monster, NPC, item, entity IDs, and target resolution.
+`ENT-001..008` remain the future network actor, state replication, vitality, non-player lifecycle, and target-resolution scope. Prompt 15 adds the internal player and entity infrastructure rows `ENT-009..021`; see the [feature parity matrix](../FEATURE_PARITY_MATRIX.md) for individual status/evidence.
 
-## Source files
+## Source behavior
 
-`world.js`, `generic/CharacterState.js`, `generic/Monster.js`, `generic/Npc.js`, `generic/Item.js`, `generic/AI.js`, `zone.js`, action packet handlers.
+The root `world.js`, `generic/CharacterState.js`, `zone.js`, and `QuadTree.js` show account/character objects attached to world clients, zone-local QuadTree IDs stored separately as `UniqueID`, saved position projection, client proximity queries, and disconnect persistence/removal. Character persistence is defined in `db/character.js`; login/selection paths are in `packets/login/handleLogin.js` and `handleGameStart.js`, with the handoff in `packets/world/handshake.js`.
 
-## Target components
+The root source supports player/client, NPC, monster, and item-like object categories. NPC definition loading is active but no source-backed NPC runtime has been migrated. MOB loading is commented out and no monster spawn simulation is started.
 
-`PlayerActor`, `MonsterActor`, `NpcActor`, `WorldItemActor`, `PlayerStateProjector`, `VitalitySystem`, `EntityIdAllocator`, `TargetResolver`.
+## Prompt 15 implementation
 
-## Dependencies
+- `ICharacterRepository` and `MongoCharacterRepository` support account/server-scoped listing, owned-character lookup, and targeted saved map/location updates.
+- `MongoCharacterDocumentMapper` maps supported legacy fields to the established domain `Character`, including sparse/null array entries, optional values, equipment, progression, attributes, and bonuses.
+- `PlayerActivationService` requires a live authenticated login session, validates account ownership, and checks for a complete persisted zone/position before activation.
+- `PlayerManager` enforces unique character/session/world-connection registration and composite zone/runtime-entity lookup. Runtime `EntityId` values are the zone spatial index's `uint`; persistent IDs remain `long`-backed domain values.
+- Zone-locked spatial registration prevents publishing into a stopped zone and rolls back failed registration. Position updates use the existing spatial index, nearby-player queries return candidates only, and removal is idempotent.
+- `PlayerManagementHostedService` saves supported location snapshots and removes players before world/zone shutdown.
 
-Depends on domain models, zone actor/index, packet state codecs, and stat calculator.
+## Explicitly outside this stage
 
-## Implementation order
+No character creation/deletion, slot-packet codec, derived stats, initial HP/Chi maxima, NPC/monster runtime actor, movement simulation, combat, gameplay scripting, world transfer, spawn/despawn packet, or client-visible state replication is implemented. No original-client compatibility claim is made. Real network disconnects cannot invoke the new application cleanup API until a player/world packet lifecycle is wired.
 
-1. Entity ID allocator.
-2. Player actor and connection binding.
-3. State projection.
-4. World item ownership/expiry.
-5. NPC actor.
-6. Monster actor.
-7. vitality/death lifecycle.
-8. target resolution and disconnection cleanup.
+## Verification and risks
 
-## Tests
+Focused tests cover mapper behavior, ownership, session expiration, active player registry races, spawn rollback, spatial updates/candidates, disconnect saves, host cleanup order, and DI. The MongoDB Testcontainers test is optional and is only evidence when run with Docker and the explicit environment gate. The fixture is synthetic; the inferred `character_mongooses` collection, production BSON subtypes, and client protocol remain unverified.
 
-- add/remove/reconnect ownership;
-- exact state packet fields;
-- HP/Chi cap/regeneration;
-- target type/zone/range;
-- item protection and expiry;
-- NPC broadcast cadence;
-- monster death and clear/reset;
-- entity ID reuse/generation behavior.
-
-## Acceptance criteria
-
-- Each entity has one zone owner and a stable client-visible ID mapping.
-- Disconnect and transfer remove/transfer state without stale ownership.
-- Packet projection includes all known fields and reserved placeholders.
-- Runtime HP/Chi, position, and target state cannot mutate persistence by aliases.
-
-## Risks
-
-Legacy code has inconsistent plural arrays, `onDelete` method names, target fields, and monsters using undefined expected fields. ID lifetime/reuse must be validated against client behavior.
+See [PLAYER_ENTITY_IMPLEMENTATION.md](PLAYER_ENTITY_IMPLEMENTATION.md), [ENTITY_LIFECYCLE.md](ENTITY_LIFECYCLE.md), [CHARACTER_PERSISTENCE.md](CHARACTER_PERSISTENCE.md), [PLAYER_SESSION_AND_WORLD_ENTRY.md](PLAYER_SESSION_AND_WORLD_ENTRY.md), and [ENTITY_VISIBILITY_INTEGRATION.md](ENTITY_VISIBILITY_INTEGRATION.md).

@@ -21,7 +21,7 @@ The current C# host provides:
 - test projects and developer build/test/format scripts;
 - GitHub Actions build, test, and formatting verification.
 
-The host now loads explicitly selected legacy zone definitions, parses optional NPC/WREGION files, maintains zone lifecycle/readiness, and provides a source-compatible X/Z spatial candidate index. This is infrastructure only: it does not instantiate NPCs or players, process world-entry or movement packets, perform zone transfers, load terrain, or run gameplay. With the default empty zone list, world health remains degraded rather than creating a placeholder zone. Complete game protocol and gameplay migration remain governed by the feature parity matrix and migration plan.
+The host now loads explicitly selected legacy zone definitions, parses optional NPC/WREGION files, maintains zone lifecycle/readiness, and provides a source-compatible X/Z spatial candidate index. It also has an account-owned character repository and an internal player activation/cleanup boundary that registers players in a running zone and saves supported location fields on disconnect/shutdown. These services are not wired to character/world packets: the host does not yet support client character selection, world entry, spawn/despawn replication, movement packets, NPC/monster runtime spawning, zone transfers, terrain, or gameplay. With the default empty zone list, world health remains degraded rather than creating a placeholder zone. Complete game protocol and gameplay migration remain governed by the feature parity matrix and migration plan.
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
 
@@ -53,7 +53,7 @@ $env:INFINITESKY_InfiniteSky__Networking__WorldPort = "11092"
 dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
 ```
 
-The listeners accept raw TCP connections and the login endpoint has an authentication packet path. Character selection, world entry, most packet handlers, and gameplay remain incomplete. See [NETWORKING_IMPLEMENTATION.md](docs/migration/NETWORKING_IMPLEMENTATION.md) and [AUTHENTICATION_IMPLEMENTATION.md](docs/migration/AUTHENTICATION_IMPLEMENTATION.md).
+The listeners accept raw TCP connections and the login endpoint has an authentication packet path. The application can list and activate an explicitly selected owned character internally, but the client character-selection packets, world handshake, full character codec, spawn/despawn replication, most packet handlers, and gameplay remain incomplete. See [NETWORKING_IMPLEMENTATION.md](docs/migration/NETWORKING_IMPLEMENTATION.md), [AUTHENTICATION_IMPLEMENTATION.md](docs/migration/AUTHENTICATION_IMPLEMENTATION.md), and [PLAYER_ENTITY_IMPLEMENTATION.md](docs/migration/PLAYER_ENTITY_IMPLEMENTATION.md).
 
 ### World lifecycle and guild bootstrap
 
@@ -68,6 +68,8 @@ dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
 
 Only the 62 IDs in the original `config.json-dist` catalog are accepted. `data\spawninfo\*.NPC` records are loaded as definitions, not spawned entities. `.MOB` spawn loading remains disabled, and the repository has no `.WREGION` or active terrain/navigation resources. Missing optional files do not prevent zone startup, but zone health reports the missing-resource counts as degraded.
 
+Player and entity infrastructure currently requires an authenticated login session, a character document owned by that account and configured server, a complete saved map/position, and a running configured zone. It is not reachable through the client protocol yet. See [ENTITY_LIFECYCLE.md](docs/migration/ENTITY_LIFECYCLE.md), [PLAYER_SESSION_AND_WORLD_ENTRY.md](docs/migration/PLAYER_SESSION_AND_WORLD_ENTRY.md), and [ENTITY_VISIBILITY_INTEGRATION.md](docs/migration/ENTITY_VISIBILITY_INTEGRATION.md) for lifecycle and compatibility limits.
+
 ### Configure MongoDB account persistence
 
 MongoDB is disabled unless explicitly enabled. For a local development database with no authentication:
@@ -80,9 +82,9 @@ $env:INFINITESKY_InfiniteSky__Database__AccountCollectionName = "account_mongoos
 dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
 ```
 
-The collection name is inferred from the legacy Mongoose model and must be checked against the target database before use. The original server resets `active` across all accounts at startup; the C# option `ResetActiveAccountsOnStartup` defaults to true to preserve that behavior. Review it carefully for multi-instance deployments. Never commit authenticated connection strings; use protected environment configuration or a secret manager.
+The account and character collection names are inferred from the legacy Mongoose models and must be checked against the target database before use. Character storage defaults to `character_mongooses`; the server shard filter defaults to the root `ServerName` value `Development`. The original server resets `active` across all accounts at startup; the C# option `ResetActiveAccountsOnStartup` defaults to true to preserve that behavior. Review it carefully for multi-instance deployments. Never commit authenticated connection strings; use protected environment configuration or a secret manager.
 
-See [MONGODB_PERSISTENCE_IMPLEMENTATION.md](docs/migration/MONGODB_PERSISTENCE_IMPLEMENTATION.md), [MONGODB_SCHEMA_MAPPING.md](docs/migration/MONGODB_SCHEMA_MAPPING.md), and [DATABASE_CONFIGURATION.md](docs/migration/DATABASE_CONFIGURATION.md) for scope, BSON decisions, configuration, and the opt-in isolated integration test.
+See [MONGODB_PERSISTENCE_IMPLEMENTATION.md](docs/migration/MONGODB_PERSISTENCE_IMPLEMENTATION.md), [MONGODB_SCHEMA_MAPPING.md](docs/migration/MONGODB_SCHEMA_MAPPING.md), [DATABASE_CONFIGURATION.md](docs/migration/DATABASE_CONFIGURATION.md), and [CHARACTER_PERSISTENCE.md](docs/migration/CHARACTER_PERSISTENCE.md) for scope, BSON decisions, configuration, and the opt-in isolated integration tests.
 
 The legacy Node.js code and its installation instructions remain below for reference.
 
