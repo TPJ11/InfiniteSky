@@ -152,6 +152,7 @@ public sealed partial class LegacyTcpListener : IAsyncDisposable
 
                 var connection = new NetworkConnection(
                     client,
+                    _kind,
                     _manager,
                     _sink,
                     _registry,

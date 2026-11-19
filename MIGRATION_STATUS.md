@@ -13,14 +13,14 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 | Metric | Count |
 |---|---:|
-| Total features | 200 |
+| Total features | 207 |
 | NOT_STARTED | 169 |
 | IN_PROGRESS | 1 |
-| IMPLEMENTED | 19 |
-| VERIFIED | 11 |
-| BLOCKED | 0 |
+| IMPLEMENTED | 22 |
+| VERIFIED | 14 |
+| BLOCKED | 1 |
 | NOT_APPLICABLE | 0 |
-| Overall verified progress | 5.5% |
+| Overall verified progress | 6.8% |
 
 Known blocked research areas are not assigned `BLOCKED` status until their owner and blocker decision are formally recorded. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
@@ -30,7 +30,9 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 |---|---:|---:|---:|---:|---:|
 | Infrastructure | 18 | 3 | 4 | 0 | 22.2% |
 | Networking | 10 | 3 | 3 | 0 | 60% |
-| Protocol | 33 | 3 | 6 | 0 | 27.3% |
+| Protocol | 33 | 2 | 7 | 0 | 27.3% |
+| Authentication | 4 | 1 | 2 | 1 | 75% |
+| Sessions | 3 | 3 | 0 | 0 | 100% |
 | Persistence | 12 | 0 | 0 | 0 | 0% |
 | Game data | 11 | 0 | 0 | 0 | 0% |
 | Domain | 15 | 10 | 0 | 0 | 0% |
@@ -41,7 +43,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **200** | **19** | **11** | **0** | **5.5%** |
+| **Total** | **207** | **22** | **14** | **1** | **6.8%** |
 
 ## Completed domain model work
 
@@ -60,8 +62,8 @@ Persistence mapping, world simulation, complete packet lifecycle, and gameplay a
 - Explicit normal float and original scalar `res+1` restruct float compatibility.
 - Nine-byte receive-frame parser and fixed opcode registry/core fixed descriptors.
 - Login greeting, login request, world handshake, zone change, map reply, pin, equipment, storage, gift, quick-use, spawn, WREGION, attack, and uncompressed state-envelope structures.
-- Original Node fixtures for login greeting, login request, and scalar CVec3 floats.
-- 21 protocol tests pass, including fixed string, boundaries, frame parsing, opcode duplicate, and exact structure round trips.
+- Original Node fixtures for login greeting, login request/reply, and scalar CVec3 floats.
+- 24 protocol tests pass, including fixed string, boundaries, frame parsing, opcode duplicate, and exact structure round trips.
 
 The complete Character/world packet tails and compressed state remain unresolved.
 
@@ -73,11 +75,20 @@ The complete Character/world packet tails and compressed state remain unresolved
 - Fragmented/coalesced/multi-frame receive accumulator with bounded buffering.
 - One ordered bounded send channel per connection.
 - Remote disconnect, idle timeout, unknown opcode, receive/send failure, and listener shutdown handling.
-- Unauthenticated packet sink with debug/warning observation and no gameplay/session association.
+- Login authentication packet sink with outcome/session diagnostics; world/gameplay packet handlers remain future.
 - Real networking metrics for active/accepted/disconnected connections, frames, bytes, and failures.
 - Loopback tests for listener, receive, send, limits, and remote disconnect.
 
-Authentication, packet handlers, session transfer, UDP, TLS, application heartbeat, and global load testing remain outside this stage.
+## Completed authentication and session foundation
+
+- Login endpoint `0x03` decoding and 41-byte legacy result encoding, with success and account-not-found hex fixtures.
+- Application-layer plaintext credential comparison matching the observed legacy string rule; the transient password byte buffer is zeroed and credentials are excluded from logs and sessions.
+- Per-connection authentication state, timeout/cancellation handling, account/session boundaries, and a process-local session store.
+- Login connection-close cleanup and duplicate-account prevention, including concurrent same-account login tests.
+- Structured authentication outcomes and real attempt/success/rejection/failure/duplicate/session metrics.
+- Explicit production blocker: the default account repository is unavailable until persistence; test repositories do not make production authentication operational.
+
+Login character slots, world transfer, distributed sessions, and MongoDB account lookup remain incomplete. The legacy plaintext password storage and the stricter in-process duplicate policy are documented in the authentication and session implementation reports.
 
 ## Outstanding domain gaps
 
@@ -94,7 +105,7 @@ The immediate critical path is:
 2. `DAT-001..008` — original game data and world data readers.
 3. `DOM-007..008` and persistence/protocol mappings for implemented models — progression, stats, and boundary conversion.
 4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — character/BSON and safe save behavior.
-5. `NET-005..009` — session phase, address selection, and transfer.
+5. `AUTH-003`, `PER-001..002`, `NET-008..009` — production account lookup, world-socket duplicate checks, and session transfer.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
 7. `WLD-002`, `ZON-002`, `ENT-001..002` — zone actor/spatial ownership/state.
 8. `INT-006..009` — real data/client compatibility and performance evidence.
@@ -115,12 +126,12 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 
 ## Recommended next action
 
-Prompt 10 networking infrastructure work is complete and awaits explicit approval for Prompt 11. The next approved work should:
+The authentication/session foundation is implemented, but production account lookup remains blocked on persistence. Do not treat this stage as production-operational. The next approved stage should:
 
-1. freeze hex packet captures and classify the `.pac` corpus;
+1. implement the approved persistence stage, including the production account repository and safe handling of legacy plaintext credentials;
 2. acquire a representative, sanitized MongoDB export and game-data manifest;
-3. define the legacy client soak transcript;
-4. begin Stage 2 fixture-oriented protocol and data readers.
+3. freeze hex packet captures and classify the `.pac` corpus;
+4. define the legacy client soak transcript before claiming complete login compatibility.
 
 ## Dependency warnings
 

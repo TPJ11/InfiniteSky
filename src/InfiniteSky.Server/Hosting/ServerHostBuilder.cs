@@ -1,3 +1,6 @@
+using InfiniteSky.Application.Authentication;
+using InfiniteSky.Networking;
+using InfiniteSky.Server.Authentication;
 using InfiniteSky.Server.Configuration;
 
 using Microsoft.Extensions.Configuration;
@@ -37,6 +40,23 @@ public static class ServerHostBuilder
 
         builder.Services.AddSingleton<IValidateOptions<InfiniteSkyOptions>, InfiniteSkyOptionsValidator>();
         builder.Services.AddInfiniteSkyInfrastructure();
+        builder.Services.AddSingleton<AuthenticationMetrics>();
+        builder.Services.AddSingleton<IAccountAuthenticationRepository, UnavailableAccountAuthenticationRepository>();
+        builder.Services.AddSingleton<ICredentialVerifier, LegacyPlaintextCredentialVerifier>();
+        builder.Services.AddSingleton<IAuthenticationSessionStore, InMemoryAuthenticationSessionStore>();
+        builder.Services.AddSingleton<IAuthenticationService>(provider =>
+        {
+            InfiniteSkyOptions options =
+                provider.GetRequiredService<IOptions<InfiniteSkyOptions>>().Value;
+            return new AuthenticationService(
+                provider.GetRequiredService<IAccountAuthenticationRepository>(),
+                provider.GetRequiredService<ICredentialVerifier>(),
+                provider.GetRequiredService<IAuthenticationSessionStore>(),
+                provider.GetRequiredService<AuthenticationMetrics>(),
+                provider.GetRequiredService<TimeProvider>(),
+                TimeSpan.FromSeconds(options.Authentication.TimeoutSeconds));
+        });
+        builder.Services.AddSingleton<IIncomingPacketSink, AuthenticationIncomingPacketSink>();
         builder.Services.AddSingleton<NetworkHostedService>();
         builder.Services.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<NetworkHostedService>());

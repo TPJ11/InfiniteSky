@@ -13,7 +13,7 @@ namespace InfiniteSky.Networking;
 /// </summary>
 public sealed partial class NetworkConnection : IAsyncDisposable
 {
-    private readonly Channel<ReadOnlyMemory<byte>> _sendQueue;
+    private readonly Channel<QueuedFrame> _sendQueue;
     private readonly TcpClient _client;
     private readonly NetworkStream _stream;
     private readonly IConnectionManager _manager;
@@ -35,6 +35,7 @@ public sealed partial class NetworkConnection : IAsyncDisposable
 
     public NetworkConnection(
         TcpClient client,
+        NetworkEndpointKind endpointKind,
         IConnectionManager manager,
         IIncomingPacketSink sink,
         LegacyPacketRegistry registry,
@@ -43,6 +44,7 @@ public sealed partial class NetworkConnection : IAsyncDisposable
         NetworkingOptions options)
     {
         _client = client;
+        EndpointKind = endpointKind;
         _stream = client.GetStream();
         _manager = manager;
         _sink = sink;
@@ -54,7 +56,7 @@ public sealed partial class NetworkConnection : IAsyncDisposable
             options.MaxReceiveBufferBytes,
             options.MaxFrameBytes,
             registry);
-        _sendQueue = Channel.CreateBounded<ReadOnlyMemory<byte>>(
+        _sendQueue = Channel.CreateBounded<QueuedFrame>(
             new BoundedChannelOptions(options.SendQueueCapacity)
             {
                 SingleReader = true,
@@ -66,6 +68,7 @@ public sealed partial class NetworkConnection : IAsyncDisposable
     }
 
     public NetworkConnectionId Id { get; }
+    public NetworkEndpointKind EndpointKind { get; }
     public IPEndPoint? RemoteEndPoint { get; }
 
     public NetworkConnectionState State
@@ -124,10 +127,15 @@ public sealed partial class NetworkConnection : IAsyncDisposable
             return false;
         }
 
+        var queued = new QueuedFrame(
+            frame.ToArray(),
+            new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously));
+        bool enqueued = false;
         try
         {
-            await _sendQueue.Writer.WriteAsync(frame.ToArray(), cancellationToken);
-            return true;
+            await _sendQueue.Writer.WriteAsync(queued, cancellationToken);
+            enqueued = true;
+            return await queued.Completion!.Task.WaitAsync(cancellationToken);
         }
         catch (ChannelClosedException)
         {
@@ -135,6 +143,10 @@ public sealed partial class NetworkConnection : IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
+            if (enqueued)
+            {
+                await CloseAsync(CancellationToken.None);
+            }
             return false;
         }
     }
@@ -153,7 +165,7 @@ public sealed partial class NetworkConnection : IAsyncDisposable
             return false;
         }
 
-        return _sendQueue.Writer.TryWrite(frame.ToArray());
+        return _sendQueue.Writer.TryWrite(new QueuedFrame(frame.ToArray(), null));
     }
 
     public async Task CloseAsync(CancellationToken cancellationToken)
@@ -318,12 +330,21 @@ public sealed partial class NetworkConnection : IAsyncDisposable
     {
         try
         {
-            await foreach (ReadOnlyMemory<byte> frame in _sendQueue.Reader.ReadAllAsync(_lifecycle.Token))
+            await foreach (QueuedFrame queued in _sendQueue.Reader.ReadAllAsync(_lifecycle.Token))
             {
-                await _stream.WriteAsync(frame, _lifecycle.Token);
-                await _stream.FlushAsync(_lifecycle.Token);
-                _metrics.BytesSent(frame.Length);
-                _metrics.FrameSent();
+                try
+                {
+                    await _stream.WriteAsync(queued.Bytes, _lifecycle.Token);
+                    await _stream.FlushAsync(_lifecycle.Token);
+                    _metrics.BytesSent(queued.Bytes.Length);
+                    _metrics.FrameSent();
+                    queued.Completion?.TrySetResult(true);
+                }
+                catch
+                {
+                    queued.Completion?.TrySetResult(false);
+                    throw;
+                }
             }
         }
         catch (OperationCanceledException) when (_lifecycle.IsCancellationRequested)
@@ -337,7 +358,18 @@ public sealed partial class NetworkConnection : IAsyncDisposable
                 NetworkConnectionState.Faulted,
                 CancellationToken.None);
         }
+        finally
+        {
+            while (_sendQueue.Reader.TryRead(out QueuedFrame? queued))
+            {
+                queued.Completion?.TrySetResult(false);
+            }
+        }
     }
+
+    private sealed record QueuedFrame(
+        ReadOnlyMemory<byte> Bytes,
+        TaskCompletionSource<bool>? Completion);
 
     public async ValueTask DisposeAsync()
     {

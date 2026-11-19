@@ -13,7 +13,9 @@ The C# transport:
 - delivers complete frames through an application sink;
 - sends bounded asynchronous frames;
 - removes/disposes connections exactly once;
-- does not create accounts, characters, sessions, or players.
+- identifies whether each connection belongs to the login or world listener;
+- delegates login authentication/session association to the application layer;
+- does not implement character sessions, world transfer, or players.
 
 ## Listener configuration
 
@@ -93,7 +95,7 @@ States:
 - `Closed`
 - `Faulted`
 
-A connection is identified by `NetworkConnectionId`, retains its `IPEndPoint`, owns one TCP stream, and has no authenticated/session fields.
+A connection is identified by `NetworkConnectionId`, retains its `IPEndPoint` and `NetworkEndpointKind` (`Login` or `World`), and owns one TCP stream. Authentication state remains in the application layer.
 
 Registration and removal use `ConnectionManager`. The limit is enforced before `NetworkConnection.Start`.
 
@@ -120,7 +122,7 @@ Incomplete input is retained until more bytes arrive or the connection closes.
 
 ## Send pipeline
 
-Every connection owns one bounded `Channel<ReadOnlyMemory<byte>>` send queue. Enqueued frames are copied so a caller cannot mutate bytes after handing them to the transport. `SendAsync` waits for bounded queue capacity. `TrySend` is non-blocking and returns false when the channel is full or closed; it does not distinguish those cases.
+Every connection owns one bounded send queue. Enqueued frames are copied so a caller cannot mutate bytes after handing them to the transport. `SendAsync` waits for queue capacity and for the frame to be written/flushed; `TrySend` only reports whether a frame entered the queue. `TrySend` returns false when the channel is full or closed and does not distinguish those cases.
 
 One receive loop and one send loop may operate concurrently. One send loop owns `NetworkStream.WriteAsync`, preventing interleaved writes. Concurrent producers are serialized by the bounded channel in enqueue order; the relative order of calls racing to enqueue is not guaranteed.
 
@@ -132,7 +134,8 @@ The send queue is bounded. It is not an unlimited per-socket buffer.
 
 Current behavior:
 
-- `SendAsync` waits for capacity until cancellation;
+- `SendAsync` waits for queue capacity and completion of the network write;
+- cancellation after enqueue closes the connection to avoid a late response being sent after the caller has abandoned it;
 - `TrySend` rejects when channel capacity is unavailable;
 - no application handler consumes queue overflow yet;
 - queue overflow should close or throttle a connection in a future application policy rather than silently drop data.
@@ -152,7 +155,7 @@ It does not implement TCP KeepAlive socket options; the idle timeout is transpor
 - complete frame bytes and opcode;
 - unknown opcode separately.
 
-The foundation uses `LoggingIncomingPacketSink`; it logs unhandled frames at debug and unknown opcodes at warning. It creates no player/authentication/gameplay interpretation.
+The Server uses `AuthenticationIncomingPacketSink` for the login endpoint's `0x03` request. It delegates authentication and session state to the application layer and leaves other frames unhandled. The world endpoint does not interpret login opcodes as authentication.
 
 ## Diagnostics
 
@@ -181,9 +184,8 @@ Tests use ephemeral ports only for internal listener tests.
 
 ## Limitations
 
-- login/world listeners are transport-only;
-- no packet application handler beyond logging;
-- no authentication/session association;
+- login authentication is implemented, but other login/world packet handlers remain future work;
+- no character/world session transfer;
 - no UDP listener;
 - no TLS;
 - no packet checksum/encryption;

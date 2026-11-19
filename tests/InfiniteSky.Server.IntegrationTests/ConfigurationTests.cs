@@ -30,6 +30,7 @@ public sealed class ConfigurationTests
         Assert.False(options.Hosting.StartServicesConcurrently);
         Assert.False(options.Hosting.StopServicesConcurrently);
         Assert.Equal("InfiniteSky", options.Diagnostics.ServiceName);
+        Assert.Equal(15, options.Authentication.TimeoutSeconds);
         Assert.False(options.Networking.Enabled);
         Assert.Equal(100, options.Networking.MaxConcurrentConnections);
         Assert.Equal(10_240, options.Networking.MaxReceiveBufferBytes);
@@ -139,6 +140,25 @@ public sealed class ConfigurationTests
             result.Failures,
             failure => failure.Contains(
                 "MaxFrameBytes must not exceed MaxReceiveBufferBytes",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ValidatorRejectsInvalidAuthenticationTimeout()
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Authentication = new AuthenticationOptions { TimeoutSeconds = 0 },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.NotNull(result.Failures);
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains(
+                "Authentication:TimeoutSeconds",
                 StringComparison.Ordinal));
     }
 }

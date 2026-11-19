@@ -31,6 +31,11 @@ public sealed class InfiniteSkyOptions
     public NetworkingOptions Networking { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets authentication safeguards.
+    /// </summary>
+    public AuthenticationOptions Authentication { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets future persistence options.
     /// </summary>
     public DatabaseOptions Database { get; set; } = new();

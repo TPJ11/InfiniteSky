@@ -29,6 +29,11 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
             failures.Add("InfiniteSky:Diagnostics:ServiceName is required.");
         }
 
+        if (options.Authentication.TimeoutSeconds is < 1 or > 300)
+        {
+            failures.Add("InfiniteSky:Authentication:TimeoutSeconds must be between 1 and 300.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.Networking.BindAddress))
         {
             failures.Add("InfiniteSky:Networking:BindAddress is required.");

@@ -22,7 +22,7 @@ public sealed partial class NetworkHostedService : IHostedService, IAsyncDisposa
     private readonly ILogger<NetworkHostedService> _logger;
     private readonly ConnectionManager _manager;
     private readonly NetworkingMetrics _metrics;
-    private readonly LoggingIncomingPacketSink _sink;
+    private readonly IIncomingPacketSink _sink;
     private readonly InfiniteSkyOptions _rootOptions;
     private readonly ApplicationLifecycleCoordinator _lifecycle;
     private readonly List<LegacyTcpListener> _listeners = [];
@@ -32,6 +32,7 @@ public sealed partial class NetworkHostedService : IHostedService, IAsyncDisposa
         IOptions<InfiniteSkyOptions> rootOptions,
         ILoggerFactory loggerFactory,
         ILogger<NetworkHostedService> logger,
+        IIncomingPacketSink sink,
         ApplicationLifecycleCoordinator lifecycle)
     {
         InfiniteSkyOptions root = rootOptions.Value;
@@ -53,8 +54,7 @@ public sealed partial class NetworkHostedService : IHostedService, IAsyncDisposa
         _logger = logger;
         _manager = new ConnectionManager(_options.MaxConcurrentConnections);
         _metrics = new NetworkingMetrics();
-        _sink = new LoggingIncomingPacketSink(
-            loggerFactory.CreateLogger<LoggingIncomingPacketSink>());
+        _sink = sink;
     }
 
     /// <summary>

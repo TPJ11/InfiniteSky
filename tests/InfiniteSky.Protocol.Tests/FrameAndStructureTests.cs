@@ -195,6 +195,43 @@ public sealed class FrameAndStructureTests
     }
 
     [Fact]
+    public void LoginSuccessReplyMatchesOriginalNodeLayout()
+    {
+        byte[] fixture = FixtureLoader.ReadHex("login-success-reply.hex.txt");
+        var writer = new LegacyBinaryWriter();
+
+        new LegacyLoginReply(LegacyLoginStatus.Success, "PlayerName").Encode(writer);
+
+        Assert.Equal(LegacyLoginReply.WireSize, writer.Offset);
+        Assert.Equal(fixture, writer.ToArray());
+    }
+
+    [Fact]
+    public void LoginAccountNotFoundReplyMatchesOriginalNodeLayout()
+    {
+        byte[] fixture = FixtureLoader.ReadHex("login-account-not-found-reply.hex.txt");
+        var writer = new LegacyBinaryWriter();
+
+        new LegacyLoginReply(LegacyLoginStatus.AccountNotFound).Encode(writer);
+
+        Assert.Equal(LegacyLoginReply.WireSize, writer.Offset);
+        Assert.Equal(fixture, writer.ToArray());
+    }
+
+    [Fact]
+    public void LoginReplyMatchesNodeUtf8TruncationAtTheSuffixBoundary()
+    {
+        byte[] fixture = FixtureLoader.ReadHex("login-success-nonascii-reply.hex.txt");
+        var writer = new LegacyBinaryWriter();
+
+        new LegacyLoginReply(
+            LegacyLoginStatus.Success,
+            new string('\u00E9', 13) + "A").Encode(writer);
+
+        Assert.Equal(fixture, writer.ToArray());
+    }
+
+    [Fact]
     public void ProvenCoreRegistriesExposeFixedPacketSizes()
     {
         LegacyPacketRegistry login = LegacyCorePacketRegistry.CreateLogin();

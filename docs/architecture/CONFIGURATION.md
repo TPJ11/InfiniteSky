@@ -21,7 +21,8 @@ All server options bind from `InfiniteSky`.
 | `Application` | application name, shutdown timeout |
 | `Hosting` | concurrent service start/stop policy |
 | `Diagnostics` | logical service source name |
-| `Networking` | reserved bind address and login/world ports; disabled in this stage |
+| `Authentication` | maximum login lookup/session-establishment duration |
+| `Networking` | bind address, login/world ports, and listener bounds; listeners disabled by default |
 | `Database` | provider and secret connection string; disabled in this stage |
 | `World` | legacy tick interval |
 | `Zones` | future zone IDs |
@@ -35,8 +36,9 @@ The tracked configuration:
 - uses `InfiniteSky` as application/diagnostics name;
 - allows 30 seconds for shutdown;
 - starts/stops hosted services sequentially;
+- limits authentication lookup and session establishment to 15 seconds;
 - sets world tick to 100 ms for future compatibility;
-- leaves network/database disabled;
+- leaves network/database disabled by default;
 - loads no zones;
 - selects `LegacyParity`.
 
@@ -45,10 +47,10 @@ The tracked configuration:
 `InfiniteSkyOptionsValidator` runs on startup. It rejects:
 
 - blank application/diagnostic names;
-- invalid shutdown/tick values or TCP ports;
+- invalid shutdown/tick values, network address/ports, or connection limits;
 - invalid/duplicate zone IDs;
 - unsupported gameplay profiles;
-- networking or database enabled before their implementations exist.
+- database enabled before a persistence adapter exists.
 
 Host option mapping is tested, including `HostOptions.ShutdownTimeout`, service concurrency, and background-service failure policy.
 
@@ -57,11 +59,16 @@ Host option mapping is tested, including `HostOptions.ShutdownTimeout`, service 
 ```text
 INFINITESKY_InfiniteSky__Application__Name=InfiniteSky-Node
 INFINITESKY_InfiniteSky__Application__ShutdownTimeoutSeconds=45
+INFINITESKY_InfiniteSky__Authentication__TimeoutSeconds=15
 INFINITESKY_InfiniteSky__Database__ConnectionString=...
 DOTNET_ENVIRONMENT=Production
 ```
 
 Database values are represented only as configuration placeholders. Do not commit a connection string. Enabling the database section currently fails options validation intentionally.
+
+## Authentication
+
+`InfiniteSky:Authentication:TimeoutSeconds` defaults to 15 seconds and must be between 1 and 300. It bounds account lookup and session establishment only; it is not an authenticated-session expiry setting. No production account repository is configured yet, so the Server reports authentication as unavailable rather than accepting accounts from a test or in-memory store.
 
 ## Reload policy
 
