@@ -57,7 +57,7 @@ public sealed class ConfigurationTests
     }
 
     [Fact]
-    public void ValidatorRejectsUnimplementedDatabaseButAllowsValidatedNetworking()
+    public void ValidatorRequiresMongoUriWhenPersistenceIsEnabled()
     {
         var validator = new InfiniteSkyOptionsValidator();
         var options = new InfiniteSkyOptions
@@ -71,7 +71,25 @@ public sealed class ConfigurationTests
         Assert.True(result.Failed);
         Assert.Contains(
             result.Failures,
-            failure => failure.Contains("Database access cannot be enabled", StringComparison.Ordinal));
+            failure => failure.Contains("ConnectionString", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void ValidatorAcceptsConfiguredMongoPersistence()
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Database = new DatabaseOptions
+            {
+                Enabled = true,
+                ConnectionString = "mongodb://localhost:27017/ts1",
+            },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.True(result.Succeeded);
     }
 
     [Fact]

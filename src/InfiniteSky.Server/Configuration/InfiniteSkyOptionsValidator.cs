@@ -100,7 +100,60 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
 
         if (options.Database.Enabled)
         {
-            failures.Add("Database access cannot be enabled in the foundation stage; no persistence adapter exists yet.");
+            if (!string.Equals(options.Database.Provider, "MongoDB", StringComparison.OrdinalIgnoreCase))
+            {
+                failures.Add("InfiniteSky:Database:Provider must be MongoDB when database persistence is enabled.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Database.ConnectionString)
+                || !(options.Database.ConnectionString.StartsWith("mongodb://", StringComparison.OrdinalIgnoreCase)
+                    || options.Database.ConnectionString.StartsWith("mongodb+srv://", StringComparison.OrdinalIgnoreCase)))
+            {
+                failures.Add("InfiniteSky:Database:ConnectionString must be a MongoDB URI when database persistence is enabled.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Database.DatabaseName))
+            {
+                failures.Add("InfiniteSky:Database:DatabaseName is required when database persistence is enabled.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Database.AccountCollectionName)
+                || options.Database.AccountCollectionName.Contains('\0'))
+            {
+                failures.Add("InfiniteSky:Database:AccountCollectionName must be a valid non-empty collection name.");
+            }
+
+            if (options.Database.ServerSelectionTimeoutSeconds is < 1 or > 120)
+            {
+                failures.Add("InfiniteSky:Database:ServerSelectionTimeoutSeconds must be between 1 and 120.");
+            }
+
+            if (options.Database.ConnectTimeoutSeconds is < 1 or > 120)
+            {
+                failures.Add("InfiniteSky:Database:ConnectTimeoutSeconds must be between 1 and 120.");
+            }
+
+            if (options.Database.OperationTimeoutSeconds is < 1 or > 300)
+            {
+                failures.Add("InfiniteSky:Database:OperationTimeoutSeconds must be between 1 and 300.");
+            }
+
+            if (options.Database.HealthCheckIntervalSeconds is < 1 or > 3600)
+            {
+                failures.Add("InfiniteSky:Database:HealthCheckIntervalSeconds must be between 1 and 3600.");
+            }
+
+            if (options.Database.HealthCheckTimeoutSeconds is < 1 or > 120)
+            {
+                failures.Add("InfiniteSky:Database:HealthCheckTimeoutSeconds must be between 1 and 120.");
+            }
+
+            if (options.Database.MinConnectionPoolSize < 0
+                || options.Database.MaxConnectionPoolSize is < 1 or > 10_000
+                || options.Database.MinConnectionPoolSize > options.Database.MaxConnectionPoolSize)
+            {
+                failures.Add("InfiniteSky:Database connection-pool limits must satisfy 0 <= Min <= Max <= 10000.");
+            }
         }
 
         if (options.World.TickMilliseconds is < 1 or > 10_000)

@@ -1,5 +1,7 @@
+using InfiniteSky.Application.Authentication;
 using InfiniteSky.Application.Diagnostics;
 using InfiniteSky.Application.Health;
+using InfiniteSky.Persistence;
 using InfiniteSky.Server.Hosting;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -34,5 +36,20 @@ public sealed class DependencyInjectionTests
 
         Assert.IsType<FoundationHostedService>(
             Assert.Single(host.Services.GetServices<IHostedService>().OfType<FoundationHostedService>()));
+    }
+
+    [Fact]
+    public void ProductionAccountRepositoryIsMongoBackedAndSingleton()
+    {
+        HostApplicationBuilder builder = ServerHostBuilder.Create();
+        using IHost host = builder.Build();
+
+        IAccountAuthenticationRepository first =
+            host.Services.GetRequiredService<IAccountAuthenticationRepository>();
+        IAccountAuthenticationRepository second =
+            host.Services.GetRequiredService<IAccountAuthenticationRepository>();
+
+        Assert.IsType<MongoAccountAuthenticationRepository>(first);
+        Assert.Same(first, second);
     }
 }

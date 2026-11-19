@@ -16,10 +16,11 @@ The current C# host provides:
 - a Generic Host composition root;
 - validated, strongly typed configuration;
 - structured startup/shutdown logging and foundation readiness;
+- login authentication and an opt-in MongoDB account repository;
 - test projects and developer build/test/format scripts;
 - GitHub Actions build, test, and formatting verification.
 
-It does **not** yet implement the legacy game protocol, TCP listeners, MongoDB access, game data loading, world simulation, or gameplay. Those remain governed by the feature parity matrix and migration plan.
+It does **not** yet implement complete legacy game protocol behavior, character selection/creation, game data loading, world simulation, or gameplay. Those remain governed by the feature parity matrix and migration plan.
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
 
@@ -37,7 +38,7 @@ PowerShell helpers are available under `scripts/`. See [FOUNDATION_IMPLEMENTATIO
 
 Lifecycle, DI, configuration, diagnostics, background-service, and health conventions are documented in [`docs/architecture/`](docs/architecture/).
 
-The server exits with code `0` after normal shutdown and code `1` on fatal startup/runtime failure. Networking and database remain disabled and unprobed until their later migration stages exist.
+The server exits with code `0` after normal shutdown and code `1` on fatal startup/runtime failure. Networking and MongoDB remain disabled by default. When MongoDB is enabled, the server verifies its connection and account index before starting listeners.
 
 GitHub Actions validates the .NET foundation on both Ubuntu and Windows. No Linux-only service wrapper or Windows Service is installed at this stage; the portable Generic Host is the deployment foundation.
 
@@ -51,7 +52,23 @@ $env:INFINITESKY_InfiniteSky__Networking__WorldPort = "11092"
 dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
 ```
 
-The listeners accept raw TCP connections but do not implement authentication, packet handlers, player sessions, or gameplay. See [NETWORKING_IMPLEMENTATION.md](docs/migration/NETWORKING_IMPLEMENTATION.md).
+The listeners accept raw TCP connections and the login endpoint has an authentication packet path. Character selection, world entry, most packet handlers, and gameplay remain incomplete. See [NETWORKING_IMPLEMENTATION.md](docs/migration/NETWORKING_IMPLEMENTATION.md) and [AUTHENTICATION_IMPLEMENTATION.md](docs/migration/AUTHENTICATION_IMPLEMENTATION.md).
+
+### Configure MongoDB account persistence
+
+MongoDB is disabled unless explicitly enabled. For a local development database with no authentication:
+
+```powershell
+$env:INFINITESKY_InfiniteSky__Database__Enabled = "true"
+$env:INFINITESKY_InfiniteSky__Database__ConnectionString = "mongodb://127.0.0.1:27017/ts1"
+$env:INFINITESKY_InfiniteSky__Database__DatabaseName = "ts1"
+$env:INFINITESKY_InfiniteSky__Database__AccountCollectionName = "account_mongooses"
+dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
+```
+
+The collection name is inferred from the legacy Mongoose model and must be checked against the target database before use. The original server resets `active` across all accounts at startup; the C# option `ResetActiveAccountsOnStartup` defaults to true to preserve that behavior. Review it carefully for multi-instance deployments. Never commit authenticated connection strings; use protected environment configuration or a secret manager.
+
+See [MONGODB_PERSISTENCE_IMPLEMENTATION.md](docs/migration/MONGODB_PERSISTENCE_IMPLEMENTATION.md), [MONGODB_SCHEMA_MAPPING.md](docs/migration/MONGODB_SCHEMA_MAPPING.md), and [DATABASE_CONFIGURATION.md](docs/migration/DATABASE_CONFIGURATION.md) for scope, BSON decisions, configuration, and the opt-in isolated integration test.
 
 The legacy Node.js code and its installation instructions remain below for reference.
 
@@ -150,14 +167,7 @@ or you could use sh script like this on linux
 
 By running that script you can easily start the database server for InfiniteSky.
 
-You will also need to create the ts1 db collection and user.
-To do that run mongo or cd bin then type ./mongo if your on linux.
-Then type in the following commands.
-```
-use ts1
-db.createCollection("ts1")
-db.createUser({user: "ts1", pwd: "ts1", roles: ["readWrite"]})
-```
+The legacy Node.js and MongoDB setup instructions below are historical and are not the C# deployment procedure. Do not reuse the sample database credentials from old configuration files. For the C# server, create/authorize a database user through your deployment's normal secure process and supply its URI via protected configuration; see [DATABASE_CONFIGURATION.md](docs/migration/DATABASE_CONFIGURATION.md).
 
 ## Get files to data directorys you made
 

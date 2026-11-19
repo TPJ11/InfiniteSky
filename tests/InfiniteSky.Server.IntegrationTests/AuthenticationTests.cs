@@ -273,13 +273,12 @@ public sealed class AuthenticationTests
     }
 
     [Fact]
-    public async Task InvalidFieldsAndUnavailableProductionRepositoryFailClosed()
+    public async Task InvalidFieldsAndRepositoryFailureFailClosed()
     {
         using var metrics = new AuthenticationMetrics();
         var sessions = new InMemoryAuthenticationSessionStore(metrics);
         using var service = new AuthenticationService(
-            new UnavailableAccountAuthenticationRepository(
-                NullLogger<UnavailableAccountAuthenticationRepository>.Instance),
+            new TestAccountRepository { FailLookup = true },
             new LegacyPlaintextCredentialVerifier(),
             sessions,
             metrics,
@@ -299,6 +298,31 @@ public sealed class AuthenticationTests
 
         Assert.Equal(AuthenticationOutcome.InvalidRequest, invalid.Outcome);
         Assert.Equal(AuthenticationOutcome.CannotAuthenticate, unavailable.Outcome);
+        Assert.Equal(0, sessions.Count);
+    }
+
+    [Fact]
+    public async Task MissingLegacyPasswordIsRejectedWithoutCredentialComparison()
+    {
+        using var metrics = new AuthenticationMetrics();
+        var repository = new TestAccountRepository { AccountPassword = null };
+        var sessions = new InMemoryAuthenticationSessionStore(metrics);
+        using var service = new AuthenticationService(
+            repository,
+            new LegacyPlaintextCredentialVerifier(),
+            sessions,
+            metrics,
+            TimeProvider.System,
+            TimeSpan.FromSeconds(5));
+
+        AuthenticationResult result = await service.AuthenticateAsync(
+            Guid.NewGuid(),
+            "PlayerName",
+            "Secret123",
+            CancellationToken.None);
+
+        Assert.Equal(AuthenticationOutcome.IncorrectPassword, result.Outcome);
+        Assert.Null(repository.LastReturnedCredential);
         Assert.Equal(0, sessions.Count);
     }
 
@@ -567,7 +591,7 @@ public sealed class AuthenticationTests
         public bool FailLookup { get; set; }
         public bool FailActiveUpdate { get; set; }
         public string AccountUsername { get; init; } = "PlayerName";
-        public string AccountPassword { get; init; } = "Secret123";
+        public string? AccountPassword { get; init; } = "Secret123";
         public int LookupCount => Volatile.Read(ref _lookupCount);
         public int Active => Volatile.Read(ref _active);
         public byte[]? LastReturnedCredential { get; private set; }
@@ -600,7 +624,9 @@ public sealed class AuthenticationTests
                 return null;
             }
 
-            LastReturnedCredential = Encoding.UTF8.GetBytes(AccountPassword);
+            LastReturnedCredential = AccountPassword is null
+                ? null
+                : Encoding.UTF8.GetBytes(AccountPassword);
             return new AccountAuthenticationRecord(
                 new AccountId(17),
                 AccountUsername,
@@ -623,6 +649,13 @@ public sealed class AuthenticationTests
             {
                 await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
             }
+        }
+
+        public ValueTask ResetAllActiveAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Interlocked.Exchange(ref _active, 0);
+            return ValueTask.CompletedTask;
         }
 
         public void ReleaseLookups() => _releaseLookups.TrySetResult();

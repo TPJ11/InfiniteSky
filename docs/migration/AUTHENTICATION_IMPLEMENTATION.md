@@ -2,7 +2,7 @@
 
 ## Scope and status
 
-This stage ports the login authentication boundary and its in-process authenticated-session state. It does not implement character listing/selection, world entry, world transfer, or production account persistence. The production Server composition deliberately uses `UnavailableAccountAuthenticationRepository`; the host cannot authenticate real accounts until the persistence stage supplies an account repository.
+This stage ports the login authentication boundary and its in-process authenticated-session state. It does not implement character listing/selection, world entry, or world transfer. Prompt 12 added the production MongoDB account repository; it is selected by the Server composition, but MongoDB remains disabled by default and live compatibility is not verified until an isolated database test and representative legacy data are available.
 
 ## Original authentication flow
 
@@ -16,7 +16,7 @@ The status table in the source also names suspended, payment, version, maintenan
 
 ## Account data required
 
-The original account schema defines numeric `_id`, unique `Username`, plaintext `Password`, numeric `active` and `Level`, and additional email, PIN, last-IP, last-login, character-individual, and AP fields ([`account.js`](../../db/account.js#L12)). The C# authentication record retains only the account identifier, username, and transient password bytes. The persistence boundary also exposes the `active` update needed by the observed login path.
+The original account schema defines numeric `_id`, unique `Username`, plaintext `Password`, numeric `active` and `Level`, and additional email, PIN, last-IP, last-login, character-individual, and AP fields ([`account.js`](../../db/account.js#L12)). The C# authentication record retains only the account identifier, username, and transient password bytes; missing or null legacy `Password` is treated as an incorrect credential. The MongoDB repository projects only those fields and exposes the `active` update needed by the observed login path.
 
 The packet handler does not apply the commented ban checks; the PIN fields are not used in the active login packet flow. The `Level > 80` stale-active exception is observed but not reproduced in this stage because the minimal account repository contract does not yet expose level. This, and the lack of the original live-world-socket check, is a documented compatibility gap.
 
@@ -60,17 +60,18 @@ Connection closure removes the in-memory session. It does not clear the persiste
 
 `InfiniteSky:Authentication:TimeoutSeconds` defaults to 15 and is validated from 1 through 300 seconds. It covers lookup and session establishment; it does not add a client-visible protocol step. No rate limiter or sequential bad-password limit was identified in the original server or added here. The fixed packet size, legacy 14-byte field limits, one in-flight request per connection, network idle timeout, and authentication timeout are the current bounds.
 
-Structured events cover request receipt, outcome, and repository unavailability. Metrics cover attempts, success, rejection, repository/session-store failures, duplicate logins, and active in-process sessions. The default repository logs a startup warning and fails explicitly; it is not an in-memory production account store.
+Structured authentication events cover request receipt and outcome. Metrics cover attempts, success, rejection, repository/session-store failures, duplicate logins, and active in-process sessions. MongoDB persistence logs operation and failure category only; it does not log usernames, passwords, connection strings, or account documents. When the database is disabled, the production repository fails explicitly rather than using an in-memory fallback.
 
 ## Verification
 
-Automated coverage includes exact response fixtures, credential match/mismatch and Latin-1 text, invalid fields, unknown accounts, repository/session-store errors, cancellation and timeout rollback, concurrent same-account login, repeated requests on one connection, response delivery before duplicate-login close, and session cleanup on disconnect. The tests use deterministic test repositories and do not require MongoDB.
+Automated coverage includes exact response fixtures, credential match/mismatch and Latin-1 text, invalid fields, unknown accounts, repository/session-store errors, cancellation and timeout rollback, concurrent same-account login, repeated requests on one connection, response delivery before duplicate-login close, and session cleanup on disconnect. Persistence tests add synthetic BSON mapping, missing/null credentials, malformed data, error classification, configuration, and redaction checks. The isolated MongoDB Testcontainers test is skipped unless explicitly enabled and Docker is available.
 
-The feature is verified only for this bounded in-process flow and its tested wire responses. Production authentication is blocked until a real account repository is implemented and validated against representative legacy account data. Character listing and full client login progression are not verified.
+The in-process flow and wire responses are verified. The production account repository is implemented but not verified against a live server or representative legacy account data; container integration was unavailable in this environment. Character listing and full client login progression are not verified.
 
 ## Migration dependencies and risks
 
-- Production account lookup and `active` persistence are blocked on the later persistence stage.
+- Physical collection name, deployed BSON numeric subtypes, server version, and authentication database remain unverified; inspect a sanitized deployment before enabling writes.
+- Startup `active` reset matches the original global update and can clear flags for every account/server using the collection.
 - Legacy plaintext passwords are a severe at-rest and breach risk; changing the format requires an approved compatibility/migration plan.
 - Duplicate policy differs from the original because world-socket lookup and the level-based stale-flag exception are not present.
 - Login disconnect can leave the persistent `active` flag stale, as in the observed login path.

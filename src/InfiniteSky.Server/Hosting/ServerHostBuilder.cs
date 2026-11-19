@@ -1,5 +1,6 @@
 using InfiniteSky.Application.Authentication;
 using InfiniteSky.Networking;
+using InfiniteSky.Persistence;
 using InfiniteSky.Server.Authentication;
 using InfiniteSky.Server.Configuration;
 
@@ -40,8 +41,37 @@ public static class ServerHostBuilder
 
         builder.Services.AddSingleton<IValidateOptions<InfiniteSkyOptions>, InfiniteSkyOptionsValidator>();
         builder.Services.AddInfiniteSkyInfrastructure();
+        builder.Services.AddSingleton<MongoPersistenceSettings>(provider =>
+        {
+            DatabaseOptions database =
+                provider.GetRequiredService<IOptions<InfiniteSkyOptions>>().Value.Database;
+            return new MongoPersistenceSettings
+            {
+                Enabled = database.Enabled,
+                ConnectionString = database.ConnectionString,
+                DatabaseName = database.DatabaseName,
+                AccountCollectionName = database.AccountCollectionName,
+                EnsureIndexesOnStartup = database.EnsureIndexesOnStartup,
+                ResetActiveAccountsOnStartup = database.ResetActiveAccountsOnStartup,
+                ServerSelectionTimeoutSeconds = database.ServerSelectionTimeoutSeconds,
+                ConnectTimeoutSeconds = database.ConnectTimeoutSeconds,
+                OperationTimeoutSeconds = database.OperationTimeoutSeconds,
+                HealthCheckIntervalSeconds = database.HealthCheckIntervalSeconds,
+                HealthCheckTimeoutSeconds = database.HealthCheckTimeoutSeconds,
+                MinConnectionPoolSize = database.MinConnectionPoolSize,
+                MaxConnectionPoolSize = database.MaxConnectionPoolSize,
+            };
+        });
+        builder.Services.AddSingleton<MongoPersistenceMetrics>();
+        builder.Services.AddSingleton<MongoPersistenceHealthState>();
+        builder.Services.AddSingleton<MongoPersistenceContext>();
+        builder.Services.AddSingleton<MongoAccountAuthenticationRepository>();
+        builder.Services.AddSingleton<IAccountAuthenticationRepository>(
+            provider => provider.GetRequiredService<MongoAccountAuthenticationRepository>());
+        builder.Services.AddSingleton<MongoPersistenceHostedService>();
+        builder.Services.AddSingleton<IHostedService>(
+            provider => provider.GetRequiredService<MongoPersistenceHostedService>());
         builder.Services.AddSingleton<AuthenticationMetrics>();
-        builder.Services.AddSingleton<IAccountAuthenticationRepository, UnavailableAccountAuthenticationRepository>();
         builder.Services.AddSingleton<ICredentialVerifier, LegacyPlaintextCredentialVerifier>();
         builder.Services.AddSingleton<IAuthenticationSessionStore, InMemoryAuthenticationSessionStore>();
         builder.Services.AddSingleton<IAuthenticationService>(provider =>

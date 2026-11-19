@@ -24,7 +24,7 @@ public sealed class FoundationHostTests
         Assert.Equal("Valid", readiness.Current.Checks["Configuration"]);
         Assert.Equal("Running", readiness.Current.Checks["Hosting"]);
         Assert.Equal("DisabledByFoundation", readiness.Current.Checks["Networking"]);
-        Assert.Equal("DisabledByFoundation", readiness.Current.Checks["Database"]);
+        Assert.Equal("DisabledByConfiguration", readiness.Current.Checks["Database"]);
 
         await host.StopAsync();
 
@@ -80,7 +80,7 @@ public sealed class FoundationHostTests
             predicate: registration => registration.Tags.Contains("readiness"));
         HealthReport runningLiveness = await health.CheckHealthAsync(
             predicate: registration => registration.Tags.Contains("liveness"));
-        Assert.Equal(HealthStatus.Healthy, runningReadiness.Status);
+        Assert.Equal(HealthStatus.Degraded, runningReadiness.Status);
         Assert.Equal(HealthStatus.Healthy, runningLiveness.Status);
 
         await host.StopAsync();
@@ -88,6 +88,34 @@ public sealed class FoundationHostTests
         HealthReport stoppedReadiness = await health.CheckHealthAsync(
             predicate: registration => registration.Tags.Contains("readiness"));
         Assert.Equal(HealthStatus.Unhealthy, stoppedReadiness.Status);
+    }
+
+    [Fact]
+    public async Task UnreachableMongoDatabaseFailsStartupAndIsNotReportedHealthy()
+    {
+        HostApplicationBuilder builder = ServerHostBuilder.Create();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["InfiniteSky:Database:Enabled"] = "true",
+            ["InfiniteSky:Database:ConnectionString"] = "mongodb://127.0.0.1:1/ts1",
+            ["InfiniteSky:Database:ServerSelectionTimeoutSeconds"] = "1",
+            ["InfiniteSky:Database:ConnectTimeoutSeconds"] = "1",
+            ["InfiniteSky:Database:HealthCheckTimeoutSeconds"] = "1",
+            ["InfiniteSky:Database:OperationTimeoutSeconds"] = "1",
+            ["InfiniteSky:Database:ResetActiveAccountsOnStartup"] = "false",
+        });
+        using IHost host = builder.Build();
+
+        InvalidOperationException exception =
+            await Assert.ThrowsAsync<InvalidOperationException>(() => host.StartAsync());
+
+        Assert.DoesNotContain("mongodb://", exception.ToString(), StringComparison.Ordinal);
+        HealthReportEntry databaseHealth = (await host.Services
+            .GetRequiredService<HealthCheckService>()
+            .CheckHealthAsync(predicate: check => check.Name == "mongodb-persistence"))
+            .Entries["mongodb-persistence"];
+        Assert.Equal(HealthStatus.Unhealthy, databaseHealth.Status);
+        Assert.Equal("Unavailable", databaseHealth.Data["FailureKind"]);
     }
 
     [Fact]

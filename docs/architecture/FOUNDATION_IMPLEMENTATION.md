@@ -2,12 +2,12 @@
 
 ## Scope
 
-This stage implements the approved solution shell, build system, Generic Host, configuration validation, lifecycle diagnostics, and developer verification.
+This stage documents the initial approved solution shell, build system, Generic Host, configuration validation, lifecycle diagnostics, and developer verification. Later migration stages have since added TCP/authentication and MongoDB account persistence; this file is historical foundation scope.
 
 It intentionally does not implement:
 
-- TCP protocol listeners or packet codecs;
-- MongoDB repositories;
+- full TCP protocol behavior or packet coverage;
+- character/world/gameplay persistence;
 - `.IMG`, spawn, or translation readers;
 - entities, zones, simulation, inventory, combat, or scripts.
 
@@ -24,7 +24,7 @@ The original Node.js implementation is unchanged.
 | `InfiniteSky.Domain` | Future pure domain models and rules; no infrastructure dependency |
 | `InfiniteSky.Protocol` | Future binary framing and codecs |
 | `InfiniteSky.GameData` | Future original game-data readers and catalog |
-| `InfiniteSky.Persistence` | Future MongoDB/BSON adapters |
+| `InfiniteSky.Persistence` | MongoDB/BSON account-authentication adapter; other repositories remain future |
 | `InfiniteSky.Networking` | Future TCP transport |
 | `InfiniteSky.World` | Future zone actors and simulation |
 | `InfiniteSky.Application` | Application lifecycle boundary and future use cases |
@@ -140,7 +140,7 @@ The tracked JSON files contain no secrets. Production credentials should be supp
 
 Logging uses `Microsoft.Extensions.Logging`. Startup and shutdown use source-generated structured logging to satisfy the analyzer policy and avoid hot-path argument evaluation.
 
-Diagnostics currently report only the lifecycle and explicitly disabled future services. Packet metrics, MongoDB health, world timing, and OpenTelemetry export remain future migration work.
+Diagnostics report lifecycle state and the MongoDB persistence health check when configured. MongoDB operation/health metrics are implemented; packet metrics, world timing, and OpenTelemetry export remain future migration work.
 
 ## Tests
 
@@ -149,7 +149,7 @@ Foundation tests verify:
 - default configuration binding;
 - environment-variable override;
 - invalid tick configuration fails startup;
-- enabling unimplemented networking/database fails validation;
+- invalid MongoDB settings fail validation and the disabled-by-default state remains explicit;
 - Generic Host starts and becomes ready;
 - one hosted-service/readiness instance is registered;
 - graceful stop transitions readiness to stopped.

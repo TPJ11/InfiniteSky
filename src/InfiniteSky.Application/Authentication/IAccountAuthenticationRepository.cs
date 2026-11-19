@@ -16,4 +16,6 @@ public interface IAccountAuthenticationRepository
         AccountId accountId,
         bool active,
         CancellationToken cancellationToken);
+
+    ValueTask ResetAllActiveAsync(CancellationToken cancellationToken);
 }

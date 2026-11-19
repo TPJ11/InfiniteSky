@@ -4,7 +4,7 @@
 
 This file is the authoritative dashboard for the .NET 10 migration. Update it only from the feature matrix and linked test evidence.
 
-- The .NET 10 solution foundation, core domain models, and binary protocol foundation are implemented where evidence supports it. Networking, database, world, and gameplay migration remains incomplete.
+- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, and MongoDB account-persistence slice are implemented where evidence supports it. Full database, world, and gameplay migration remains incomplete.
 - A feature may be `VERIFIED` only after its test/acceptance evidence exists and is linked.
 - `IMPLEMENTED` is not `VERIFIED`.
 - Blockers are documented below, in the matrix notes, and in `docs/migration/MIGRATION_RISKS.md`.
@@ -13,14 +13,14 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 | Metric | Count |
 |---|---:|
-| Total features | 207 |
-| NOT_STARTED | 169 |
+| Total features | 209 |
+| NOT_STARTED | 166 |
 | IN_PROGRESS | 1 |
-| IMPLEMENTED | 22 |
+| IMPLEMENTED | 28 |
 | VERIFIED | 14 |
-| BLOCKED | 1 |
+| BLOCKED | 0 |
 | NOT_APPLICABLE | 0 |
-| Overall verified progress | 6.8% |
+| Overall verified progress | 6.7% |
 
 Known blocked research areas are not assigned `BLOCKED` status until their owner and blocker decision are formally recorded. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
@@ -31,9 +31,9 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Infrastructure | 18 | 3 | 4 | 0 | 22.2% |
 | Networking | 10 | 3 | 3 | 0 | 60% |
 | Protocol | 33 | 2 | 7 | 0 | 27.3% |
-| Authentication | 4 | 1 | 2 | 1 | 75% |
+| Authentication | 4 | 2 | 2 | 0 | 100% |
 | Sessions | 3 | 3 | 0 | 0 | 100% |
-| Persistence | 12 | 0 | 0 | 0 | 0% |
+| Persistence | 14 | 5 | 0 | 0 | 35.7% |
 | Game data | 11 | 0 | 0 | 0 | 0% |
 | Domain | 15 | 10 | 0 | 0 | 0% |
 | World engine | 10 | 0 | 0 | 0 | 0% |
@@ -43,7 +43,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **207** | **22** | **14** | **1** | **6.8%** |
+| **Total** | **209** | **28** | **14** | **0** | **6.7%** |
 
 ## Completed domain model work
 
@@ -54,7 +54,7 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 - Monster/NPC/world-item runtime entities and zone spawn/region descriptors.
 - 28 domain compatibility tests covering defaults, null/sparse arrays, identifiers, enum values, numerics, definitions, and identity.
 
-Persistence mapping, world simulation, complete packet lifecycle, and gameplay algorithms remain `NOT_STARTED` or `IN_PROGRESS` as listed in the feature matrix.
+Full persistence mapping, world simulation, complete packet lifecycle, and gameplay algorithms remain `NOT_STARTED` or `IN_PROGRESS` as listed in the feature matrix.
 
 ## Completed binary protocol work
 
@@ -86,15 +86,26 @@ The complete Character/world packet tails and compressed state remain unresolved
 - Per-connection authentication state, timeout/cancellation handling, account/session boundaries, and a process-local session store.
 - Login connection-close cleanup and duplicate-account prevention, including concurrent same-account login tests.
 - Structured authentication outcomes and real attempt/success/rejection/failure/duplicate/session metrics.
-- Explicit production blocker: the default account repository is unavailable until persistence; test repositories do not make production authentication operational.
+- The production MongoDB repository is registered; database access remains opt-in and live legacy-data compatibility is not verified.
 
-Login character slots, world transfer, distributed sessions, and MongoDB account lookup remain incomplete. The legacy plaintext password storage and the stricter in-process duplicate policy are documented in the authentication and session implementation reports.
+Login character slots, world transfer, and distributed sessions remain incomplete. The legacy plaintext password storage and the stricter in-process duplicate policy are documented in the authentication and session implementation reports.
+
+## Completed MongoDB persistence slice
+
+- Official MongoDB C# driver with one DI-owned client, validated configuration, bounded startup/health probes, explicit error categories, and driver retry reads/writes disabled.
+- Raw BSON account lookup and field-only `active` updates behind Prompt 11's repository interface; missing/null credential behavior fails closed.
+- Configurable unique username index verification/bootstrap, with no index drops or schema migration.
+- Startup `active=0` reset matches the root Node behavior and is configurable; it affects the entire selected account collection.
+- BSON fixture, mapping/config/DI/error/redaction tests, and an opt-in ephemeral Testcontainers integration test.
+- `dotnet restore` and full solution build pass. Runnable tests pass; the MongoDB container test is skipped because neither Docker nor `mongod` is available. The fixture is synthetic, not a production database export.
+
+This is not full persistence parity. Characters, counters, guilds, email, banks, inventory, gameplay writes, save coordination, data comparison, and full original behavior remain incomplete. The inferred `account_mongooses` collection name, deployed index state, BSON numeric subtypes, server version, and authentication database must be confirmed before production use.
 
 ## Outstanding domain gaps
 
 - `MonstersKilled` has no typed key/usage evidence and remains deferred.
 - Packet character tails, NPC/monster unknown records, and quest state are not modeled.
-- Domain models are implemented but their persistence/protocol mappers are not yet implemented, so affected matrix rows remain `IMPLEMENTED`, not `VERIFIED`.
+- Most domain models still lack persistence/protocol mappers; the MongoDB account-authentication adapter is a separate narrow raw-BSON slice. Affected matrix rows remain `IMPLEMENTED`, not `VERIFIED`.
 - Numeric widths at packet boundaries require later adapter validation.
 
 ## Critical outstanding features
@@ -105,7 +116,7 @@ The immediate critical path is:
 2. `DAT-001..008` — original game data and world data readers.
 3. `DOM-007..008` and persistence/protocol mappings for implemented models — progression, stats, and boundary conversion.
 4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — character/BSON and safe save behavior.
-5. `AUTH-003`, `PER-001..002`, `NET-008..009` — production account lookup, world-socket duplicate checks, and session transfer.
+5. `NET-008..009`, `PER-003..012` — session transfer, character/gameplay persistence, and full schema compatibility.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
 7. `WLD-002`, `ZON-002`, `ENT-001..002` — zone actor/spatial ownership/state.
 8. `INT-006..009` — real data/client compatibility and performance evidence.
@@ -126,12 +137,7 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 
 ## Recommended next action
 
-The authentication/session foundation is implemented, but production account lookup remains blocked on persistence. Do not treat this stage as production-operational. The next approved stage should:
-
-1. implement the approved persistence stage, including the production account repository and safe handling of legacy plaintext credentials;
-2. acquire a representative, sanitized MongoDB export and game-data manifest;
-3. freeze hex packet captures and classify the `.pac` corpus;
-4. define the legacy client soak transcript before claiming complete login compatibility.
+The authentication/session foundation and account-persistence slice are implemented. Before production use, verify the inferred account collection and indexes, run the opt-in isolated MongoDB suite, and compare a sanitized representative BSON export. Full persistence parity remains incomplete; do not treat MongoDB connectivity as completion of character/gameplay persistence.
 
 ## Dependency warnings
 

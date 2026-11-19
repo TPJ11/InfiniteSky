@@ -125,7 +125,8 @@ public sealed class AuthenticationService : IAuthenticationService, IDisposable
                     return Record(new AuthenticationResult(AuthenticationOutcome.TimedOut));
                 }
 
-                if (!_credentialVerifier.Verify(password, account.LegacyPasswordUtf8))
+                if (account.LegacyPasswordUtf8 is null
+                    || !_credentialVerifier.Verify(password, account.LegacyPasswordUtf8))
                 {
                     return Record(new AuthenticationResult(AuthenticationOutcome.IncorrectPassword));
                 }
@@ -231,7 +232,10 @@ public sealed class AuthenticationService : IAuthenticationService, IDisposable
             }
             finally
             {
-                CryptographicOperations.ZeroMemory(account.LegacyPasswordUtf8);
+                if (account.LegacyPasswordUtf8 is not null)
+                {
+                    CryptographicOperations.ZeroMemory(account.LegacyPasswordUtf8);
+                }
             }
         }
         catch (OperationCanceledException) when (context.IsClosed)

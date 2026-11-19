@@ -1,0 +1,19 @@
+{
+  "_id": 17,
+  "Username": "LegacyFixture",
+  "Password": "fixture-only-password",
+  "active": 0,
+  "Level": 0,
+  "Email": "fixture@example.invalid",
+  "LastIP": "192.0.2.42",
+  "UsePin": false,
+  "Pin": "0000",
+  "LastLogin": {
+    "$date": "2015-01-02T03:04:05Z"
+  },
+  "CharacterIndividuals": null,
+  "AP": 0,
+  "UnmappedLegacyField": {
+    "PreservedByRawBson": true
+  }
+}
