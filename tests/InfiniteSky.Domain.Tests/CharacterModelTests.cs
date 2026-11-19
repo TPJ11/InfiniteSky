@@ -153,7 +153,9 @@ public sealed class CharacterModelTests
         guild.Members.Add(new GuildMember("Master", GuildMemberRole.Master));
         guild.Members.Add(new GuildMember("Member", GuildMemberRole.Member));
 
-        Assert.Equal(["Master", "Member"], guild.Members.Select(member => member.Name));
-        Assert.Equal(GuildMemberRole.Master, guild.Members[0].Role);
+        Assert.Equal(
+            ["Master", "Member"],
+            guild.Members.Select(member => Assert.IsType<GuildMember>(member).Name));
+        Assert.Equal(GuildMemberRole.Master, Assert.IsType<GuildMember>(guild.Members[0]).Role);
     }
 }

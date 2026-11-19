@@ -13,14 +13,14 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 | Metric | Count |
 |---|---:|
-| Total features | 209 |
+| Total features | 212 |
 | NOT_STARTED | 166 |
 | IN_PROGRESS | 1 |
-| IMPLEMENTED | 28 |
+| IMPLEMENTED | 31 |
 | VERIFIED | 14 |
 | BLOCKED | 0 |
 | NOT_APPLICABLE | 0 |
-| Overall verified progress | 6.7% |
+| Overall verified progress | 6.6% |
 
 Known blocked research areas are not assigned `BLOCKED` status until their owner and blocker decision are formally recorded. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
@@ -36,14 +36,14 @@ Known blocked research areas are not assigned `BLOCKED` status until their owner
 | Persistence | 14 | 5 | 0 | 0 | 35.7% |
 | Game data | 11 | 0 | 0 | 0 | 0% |
 | Domain | 15 | 10 | 0 | 0 | 0% |
-| World engine | 10 | 0 | 0 | 0 | 0% |
+| World engine | 13 | 3 | 0 | 0 | 0% |
 | Zones/spatial | 8 | 0 | 0 | 0 | 0% |
 | Entities/players | 8 | 0 | 0 | 0 | 0% |
 | Gameplay | 38 | 0 | 0 | 0 | 0% |
 | Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **209** | **28** | **14** | **0** | **6.7%** |
+| **Total** | **212** | **31** | **14** | **0** | **6.6%** |
 
 ## Completed domain model work
 
@@ -97,9 +97,18 @@ Login character slots, world transfer, and distributed sessions remain incomplet
 - Configurable unique username index verification/bootstrap, with no index drops or schema migration.
 - Startup `active=0` reset matches the root Node behavior and is configurable; it affects the entire selected account collection.
 - BSON fixture, mapping/config/DI/error/redaction tests, and an opt-in ephemeral Testcontainers integration test.
-- `dotnet restore` and full solution build pass. Runnable tests pass; the MongoDB container test is skipped because neither Docker nor `mongod` is available. The fixture is synthetic, not a production database export.
+- `dotnet restore` and full solution build pass. Runnable tests pass; the MongoDB container test is skipped unless `INFINITESKY_RUN_MONGODB_INTEGRATION_TESTS=true` is set. The fixture is synthetic, not a production database export.
 
-This is not full persistence parity. Characters, counters, guilds, email, banks, inventory, gameplay writes, save coordination, data comparison, and full original behavior remain incomplete. The inferred `account_mongooses` collection name, deployed index state, BSON numeric subtypes, server version, and authentication database must be confirmed before production use.
+This is not full persistence parity. Characters, counters, guild writes/repair, email, banks, inventory, gameplay writes, save coordination, data comparison, and full original behavior remain incomplete. The inferred `account_mongooses` and `guilds` collection names, deployed index state, BSON numeric subtypes, server version, and authentication database must be confirmed before production use.
+
+## World management foundation (Prompt 13)
+
+- Implemented the root server's single-world lifecycle, readiness reporting, and host ordering; no world ID, multi-world registry, or world selection was found in the root Node startup.
+- Added the source-backed 100 ms default cadence as validated `InfiniteSky:World:TickMilliseconds` configuration. The production clock remains idle while the world is degraded because no zone readiness provider exists.
+- Added the asynchronous MongoDB guild bootstrap and the legacy guild field mapper. The inferred `guilds` collection name and live BSON compatibility remain unverified.
+- Added the `IWorldZoneReadiness` boundary without a fake zone or zone implementation. Networking/world entry, zone loading/simulation, players, and gameplay remain incomplete.
+- `WLD-011..013` are `IMPLEMENTED`, not `VERIFIED`; tests establish unit/host integration behavior but do not establish original-client or live-database parity. See [WORLD_MANAGEMENT_IMPLEMENTATION.md](docs/migration/WORLD_MANAGEMENT_IMPLEMENTATION.md) and [WORLD_LIFECYCLE.md](docs/migration/WORLD_LIFECYCLE.md).
+- Validation: solution restore and build succeeded with zero warnings; 125 tests passed, 1 opt-in MongoDB test was skipped, and full-solution format verification passed. The game-data test project has no discoverable tests.
 
 ## Outstanding domain gaps
 
@@ -118,7 +127,7 @@ The immediate critical path is:
 4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — character/BSON and safe save behavior.
 5. `NET-008..009`, `PER-003..012` — session transfer, character/gameplay persistence, and full schema compatibility.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
-7. `WLD-002`, `ZON-002`, `ENT-001..002` — zone actor/spatial ownership/state.
+7. `WLD-001..010`, `ZON-001..008`, `ENT-001..002` — zone readiness, actor/spatial ownership/state, and world behavior beyond the lifecycle foundation.
 8. `INT-006..009` — real data/client compatibility and performance evidence.
 
 ## Blocked research areas
@@ -137,7 +146,7 @@ These are not yet formal `BLOCKED` statuses but are current evidence gaps:
 
 ## Recommended next action
 
-The authentication/session foundation and account-persistence slice are implemented. Before production use, verify the inferred account collection and indexes, run the opt-in isolated MongoDB suite, and compare a sanitized representative BSON export. Full persistence parity remains incomplete; do not treat MongoDB connectivity as completion of character/gameplay persistence.
+The authentication/session foundation, account-persistence slice, and Prompt 13 world lifecycle/bootstrap foundation are implemented. Before production use, verify inferred collections and indexes, run the opt-in isolated MongoDB suite, and compare a sanitized representative BSON export. Full persistence and world parity remain incomplete; do not treat MongoDB connectivity or the lifecycle foundation as completion of character, zone, or gameplay persistence.
 
 ## Dependency warnings
 

@@ -24,6 +24,18 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
             failures.Add("InfiniteSky:Application:ShutdownTimeoutSeconds must be between 1 and 300.");
         }
 
+        if (options.Hosting.StartServicesConcurrently)
+        {
+            failures.Add(
+                "InfiniteSky:Hosting:StartServicesConcurrently must be false because hosted services have startup dependencies.");
+        }
+
+        if (options.Hosting.StopServicesConcurrently)
+        {
+            failures.Add(
+                "InfiniteSky:Hosting:StopServicesConcurrently must be false because hosted services have shutdown dependencies.");
+        }
+
         if (string.IsNullOrWhiteSpace(options.Diagnostics.ServiceName))
         {
             failures.Add("InfiniteSky:Diagnostics:ServiceName is required.");
@@ -121,6 +133,12 @@ public sealed class InfiniteSkyOptionsValidator : IValidateOptions<InfiniteSkyOp
                 || options.Database.AccountCollectionName.Contains('\0'))
             {
                 failures.Add("InfiniteSky:Database:AccountCollectionName must be a valid non-empty collection name.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Database.GuildCollectionName)
+                || options.Database.GuildCollectionName.Contains('\0'))
+            {
+                failures.Add("InfiniteSky:Database:GuildCollectionName must be a valid non-empty collection name.");
             }
 
             if (options.Database.ServerSelectionTimeoutSeconds is < 1 or > 120)

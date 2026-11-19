@@ -40,7 +40,7 @@ The repository projects `_id`, `Username`, and `Password`, unlike Mongoose's ful
 | Character lookup/create/delete | [`packets/login/handleManageCharacter.js:107-121`](../../packets/login/handleManageCharacter.js), [`packets/login/handleManageCharacter.js:220-265`](../../packets/login/handleManageCharacter.js) | Not implemented. |
 | Atomic ID counter | [`db/counter.js:5-20`](../../db/counter.js) | Not implemented. Schema `_id` is a string; `seq` is a number; `findByIdAndUpdate` uses `$inc`, `upsert`, `new`, and a `seq` projection. Error behavior calls back with `null`. |
 | Character save and nested state | [`db/character.js:50-110`](../../db/character.js), repeated `.save()` calls in [`world.js`](../../world.js) and packet handlers | Not implemented. Schema includes numeric IDs/stats, nullable `GuildName`, equipment subdocuments, and `Mixed` inventory/skill/storage arrays. Duplicate JavaScript object keys mean later keys overwrite earlier declarations. |
-| Guild load and writes | [`db/guild.js:6-14`](../../db/guild.js), [`world.js:939-949`](../../world.js), guild packet handlers | Not implemented. Fields include case-sensitive `Name`, numeric `Level`, boolean emblem flag, and `Members: [Mixed]`. |
+| Guild load and writes | [`db/guild.js:6-14`](../../db/guild.js), [`world.js:939-949`](../../world.js), guild packet handlers | Read-only world bootstrap implemented through `MongoGuildRepository`; guild writes and packet workflows remain unimplemented. Fields include case-sensitive `Name`, numeric `Level`, boolean emblem flag, and `Members: [Mixed]`. |
 | Email queue schema | [`db/email_queue.js:6-15`](../../db/email_queue.js) | Not implemented; no active query/insert consumer was found. Fields include indexed `Subject`/`To`, `Body`, `Added` date default, and optional `Sent` date. |
 
 Declared root indexes are Mongoose schema flags, not a deploy-time index inventory: account `_id` and `Username` are unique/indexed; character `_id` and `Name` are unique/indexed with indexed `GuildName`; guild `Name` is unique/indexed; email `Subject` and `To` are indexed. Runtime index names and any drift require inspection of the deployed database.
@@ -58,13 +58,14 @@ Its account model is named `accounts` and adds `Logged` and `Status` instead of 
 - Numeric account IDs are tolerated across common BSON integer and integral-double encodings. String IDs, fractional doubles, negative IDs, and nonnumeric types fail explicitly.
 - Password type must be BSON string when present; `null` and missing are represented as no credential. Unexpected types fail closed rather than being coerced.
 - The account repository does not hydrate Mongoose defaults into missing fields. A synthetic fixture checks BSON `Int32`, date, null, and an unknown nested field.
+- The world guild bootstrap maps only the legacy `Name`, `Level`, `hasGuildEmblem`, and member `Name`/`LeaderFlag` data needed by its current domain snapshot. Missing `Level` and emblem use schema defaults; null member slots are preserved; malformed member structures fail explicitly. Its `guilds` collection name is configurable but inferred, not verified against a deployment.
 - Updates use `$set` on one field only. There are no account replacements, schema migrations, collection drops, bulk conversions, or transactions.
 - `active` writes use `Int32`; exact legacy serialized numeric width remains unverified without a representative dump and the deployed Node BSON version.
 - The connection string must identify the configured database if it includes a path. Configure `authSource` explicitly in the URI when the deployment's authentication database differs from MongoDB's default.
 
 ## Compatibility risks still open
 
-1. Verify the physical account collection name and existing index definitions before enabling persistence.
+1. Verify the physical account and guild collection names and existing index definitions before enabling persistence.
 2. Compare account `_id` and `active` BSON numeric subtypes against a sanitized export.
 3. Confirm deployed MongoDB server version, authentication mechanism, and least-privilege permissions for `ping`, `listIndexes`, `createIndexes`, account lookup, and update.
 4. Decide whether global startup `active` reset is appropriate for a multi-instance deployment.

@@ -1,5 +1,6 @@
 using InfiniteSky.Application.Health;
 using InfiniteSky.Server.Hosting;
+using InfiniteSky.World;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,33 @@ public sealed class FoundationHostTests
             hostedService,
             Assert.Single(host.Services.GetServices<IHostedService>().OfType<FoundationHostedService>()));
         await host.StopAsync();
+    }
+
+    [Fact]
+    public async Task WorldHostedServiceRunsBetweenPersistenceAndNetworking()
+    {
+        HostApplicationBuilder builder = ServerHostBuilder.Create();
+        using IHost host = builder.Build();
+        Type[] hostedServiceTypes = host.Services.GetServices<IHostedService>()
+            .Select(service => service.GetType())
+            .ToArray();
+
+        Assert.True(
+            Array.IndexOf(hostedServiceTypes, typeof(MongoPersistenceHostedService))
+            < Array.IndexOf(hostedServiceTypes, typeof(WorldHostedService)));
+        Assert.True(
+            Array.IndexOf(hostedServiceTypes, typeof(WorldHostedService))
+            < Array.IndexOf(hostedServiceTypes, typeof(NetworkHostedService)));
+
+        await host.StartAsync();
+        WorldRuntime runtime = host.Services.GetRequiredService<WorldRuntime>();
+        Assert.Equal(WorldLifecycleState.Running, runtime.Current.State);
+        Assert.Equal(WorldReadinessStatus.Degraded, runtime.Current.Readiness);
+        Assert.Contains(WorldReadinessBlocker.ZoneRuntimeUnavailable, runtime.Current.Blockers);
+        Assert.Equal(0, runtime.Current.LoadedZoneCount);
+
+        await host.StopAsync();
+        Assert.Equal(WorldLifecycleState.Stopped, runtime.Current.State);
     }
 
     [Fact]

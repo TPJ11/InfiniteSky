@@ -24,7 +24,7 @@ public sealed class MongoPersistenceException : Exception
             MongoPersistenceFailureKind.AccountNotFound => "The account no longer exists.",
             MongoPersistenceFailureKind.DuplicateKey => "MongoDB rejected a duplicate key.",
             MongoPersistenceFailureKind.Serialization => "A MongoDB BSON serialization operation failed.",
-            MongoPersistenceFailureKind.MalformedDocument => "The account document is malformed.",
+            MongoPersistenceFailureKind.MalformedDocument => "A MongoDB document is malformed.",
             MongoPersistenceFailureKind.IndexConflict => "The account username index is incompatible.",
             MongoPersistenceFailureKind.IndexMissing => "The required account username index is missing.",
             MongoPersistenceFailureKind.OperationCancelled => "The MongoDB operation was cancelled.",

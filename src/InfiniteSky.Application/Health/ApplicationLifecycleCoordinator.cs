@@ -19,6 +19,7 @@ public sealed class ApplicationLifecycleCoordinator : IApplicationReadiness
         ["Hosting"] = "Created",
         ["Networking"] = "NotImplemented",
         ["Database"] = "NotImplemented",
+        ["World"] = "NotInitialized",
     };
 
     /// <summary>

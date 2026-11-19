@@ -23,6 +23,8 @@ public sealed class MongoAccountAuthenticationRepositoryIntegrationTests
         IMongoDatabase database = client.GetDatabase(databaseName);
         IMongoCollection<BsonDocument> accounts =
             database.GetCollection<BsonDocument>(collectionName);
+        IMongoCollection<BsonDocument> guildDocuments =
+            database.GetCollection<BsonDocument>("guilds");
         var settings = new MongoPersistenceSettings
         {
             Enabled = true,
@@ -50,12 +52,38 @@ public sealed class MongoAccountAuthenticationRepositoryIntegrationTests
             { "UnmappedLegacyField", new BsonDocument("keep", true) },
         };
         await accounts.InsertOneAsync(accountDocument);
+        await guildDocuments.InsertOneAsync(new BsonDocument
+        {
+            { "Name", "IntegrationGuild" },
+            { "Level", 2 },
+            { "hasGuildEmblem", true },
+            {
+                "Members",
+                new BsonArray
+                {
+                    new BsonDocument
+                    {
+                        { "Name", "GuildLeader" },
+                        { "LeaderFlag", 2 },
+                    },
+                }
+            },
+        });
 
         var repository = new MongoAccountAuthenticationRepository(
             context,
             healthState,
             metrics,
             NullLogger<MongoAccountAuthenticationRepository>.Instance);
+        var guildRepository = new MongoGuildRepository(
+            context,
+            healthState,
+            metrics,
+            NullLogger<MongoGuildRepository>.Instance);
+        IReadOnlyList<InfiniteSky.Domain.Guilds.Guild> guilds =
+            await guildRepository.LoadAllAsync(CancellationToken.None);
+        Assert.Equal("IntegrationGuild", Assert.Single(guilds).Name);
+
         AccountAuthenticationRecord? account = await repository.FindByUsernameAsync(
             "LegacyFixture",
             CancellationToken.None);

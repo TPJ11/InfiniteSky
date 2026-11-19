@@ -40,7 +40,10 @@ public static class ServiceCollectionExtensions
                 tags: ["readiness"])
             .AddCheck<MongoPersistenceHealthCheck>(
                 "mongodb-persistence",
-                tags: ["readiness", "database"]);
+                tags: ["readiness", "database"])
+            .AddCheck<WorldHealthCheck>(
+                "world-readiness",
+                tags: ["readiness", "world"]);
 
         return services;
     }

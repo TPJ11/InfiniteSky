@@ -17,10 +17,11 @@ The current C# host provides:
 - validated, strongly typed configuration;
 - structured startup/shutdown logging and foundation readiness;
 - login authentication and an opt-in MongoDB account repository;
+- a single-world lifecycle, readiness boundary, and optional MongoDB guild bootstrap;
 - test projects and developer build/test/format scripts;
 - GitHub Actions build, test, and formatting verification.
 
-It does **not** yet implement complete legacy game protocol behavior, character selection/creation, game data loading, world simulation, or gameplay. Those remain governed by the feature parity matrix and migration plan.
+The world lifecycle is not full world readiness: no zone provider or world packet/session-entry path is registered, so world health remains degraded and zone/gameplay simulation does not run. The server does **not** yet implement complete legacy game protocol behavior, character selection/creation, game data loading, zone management, or gameplay. Those remain governed by the feature parity matrix and migration plan.
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
 
@@ -53,6 +54,10 @@ dotnet run --project src\InfiniteSky.Server\InfiniteSky.Server.csproj
 ```
 
 The listeners accept raw TCP connections and the login endpoint has an authentication packet path. Character selection, world entry, most packet handlers, and gameplay remain incomplete. See [NETWORKING_IMPLEMENTATION.md](docs/migration/NETWORKING_IMPLEMENTATION.md) and [AUTHENTICATION_IMPLEMENTATION.md](docs/migration/AUTHENTICATION_IMPLEMENTATION.md).
+
+### World lifecycle and guild bootstrap
+
+The server initializes a single process-local world before starting network listeners. `InfiniteSky:World:TickMilliseconds` defaults to the legacy 100 ms cadence. With MongoDB enabled, after MongoDB's host startup checks pass, world startup loads the configured guild collection; a guild-query failure or the not-yet-implemented zone runtime is reported as degraded world readiness. A MongoDB connection/startup failure prevents host startup. This is lifecycle/bootstrap infrastructure only: it does not load zones, create players, process world packets, or run gameplay. See [WORLD_MANAGEMENT_IMPLEMENTATION.md](docs/migration/WORLD_MANAGEMENT_IMPLEMENTATION.md), [WORLD_LIFECYCLE.md](docs/migration/WORLD_LIFECYCLE.md), [WORLD_CONFIGURATION.md](docs/migration/WORLD_CONFIGURATION.md), and [WORLD_INTEGRATION_BOUNDARIES.md](docs/migration/WORLD_INTEGRATION_BOUNDARIES.md).
 
 ### Configure MongoDB account persistence
 

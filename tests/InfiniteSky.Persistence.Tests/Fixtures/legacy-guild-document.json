@@ -1,0 +1,11 @@
+{
+  "_id": { "$oid": "6550a98f6c2d5a28a031bc12" },
+  "Name": "LegacyGuild",
+  "Level": 3,
+  "hasGuildEmblem": true,
+  "Members": [
+    { "Name": "GuildMaster", "LeaderFlag": 2 },
+    null,
+    { "Name": "GuildAssistant", "LeaderFlag": 1, "UnknownLegacyField": "preserved" }
+  ]
+}

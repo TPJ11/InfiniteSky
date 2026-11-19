@@ -32,6 +32,7 @@ public sealed partial class FoundationHostedService : IHostedService
             _lifecycle.SetCheck("Configuration", "Valid");
             _lifecycle.SetCheck("Networking", "DisabledByFoundation");
             _lifecycle.SetCheck("Database", "DisabledByFoundation");
+            _lifecycle.SetCheck("World", "NotInitialized");
 
             await _lifecycle.TransitionAsync(
                 ApplicationLifecyclePhase.Initialising,

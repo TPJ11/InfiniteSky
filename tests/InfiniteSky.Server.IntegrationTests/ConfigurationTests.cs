@@ -92,6 +92,32 @@ public sealed class ConfigurationTests
         Assert.True(result.Succeeded);
     }
 
+    [Theory]
+    [InlineData(true, false, "StartServicesConcurrently")]
+    [InlineData(false, true, "StopServicesConcurrently")]
+    public void ValidatorRejectsConcurrentHostedServiceLifecycle(
+        bool startConcurrently,
+        bool stopConcurrently,
+        string optionName)
+    {
+        var validator = new InfiniteSkyOptionsValidator();
+        var options = new InfiniteSkyOptions
+        {
+            Hosting = new HostingOptions
+            {
+                StartServicesConcurrently = startConcurrently,
+                StopServicesConcurrently = stopConcurrently,
+            },
+        };
+
+        ValidateOptionsResult result = validator.Validate(Options.DefaultName, options);
+
+        Assert.True(result.Failed);
+        Assert.Contains(
+            result.Failures,
+            failure => failure.Contains(optionName, StringComparison.Ordinal));
+    }
+
     [Fact]
     public void EnvironmentVariablesOverrideBaseConfiguration()
     {

@@ -9,6 +9,7 @@ public sealed class MongoPersistenceSettings
     public string ConnectionString { get; init; } = string.Empty;
     public string DatabaseName { get; init; } = "ts1";
     public string AccountCollectionName { get; init; } = "account_mongooses";
+    public string GuildCollectionName { get; init; } = "guilds";
     public bool EnsureIndexesOnStartup { get; init; } = true;
     public bool ResetActiveAccountsOnStartup { get; init; } = true;
     public int ServerSelectionTimeoutSeconds { get; init; } = 5;

@@ -144,6 +144,16 @@ flowchart TD
 
 **Exit criteria:** an original-protocol client authenticates, manages/selects characters, receives endpoint, enters world, and receives character/world data byte-compatible.
 
+## Prompt 13 — Single-world lifecycle and bootstrap foundation
+
+**Features:** `WLD-011..013`.
+
+**Work completed:** single root-world lifecycle/readiness, 100 ms default cadence configuration and a cancellation-aware clock boundary, asynchronous MongoDB guild bootstrap, health/metrics, and a zone-readiness interface with no placeholder zone implementation.
+
+**Evidence:** `WorldRuntimeTests`, `WorldClockTests`, `MongoGuildDocumentMapperTests`, and server host integration tests. These establish implementation and host behavior, not live-database or original-client parity; the matrix status remains `IMPLEMENTED`.
+
+**Limitations:** no source-backed world ID or world registry; no zone provider, world packet/session entry, player, or gameplay behavior. Production world readiness remains degraded until the zone stage supplies an actual provider.
+
 ## Stage 6 — Zone actors, persistence snapshots, and spatial index
 
 **Features:** `WLD-001..010`, `ZON-001..008`, selected `PER-012`.
@@ -158,6 +168,8 @@ flowchart TD
 - lifecycle/shutdown.
 
 **Dependencies:** Stage 5 and `DAT-007..008`.
+
+This zone/spatial stage is the next separate migration stage (Prompt 14). Prompt 13 does not implement any of its zone loading, actor, spatial, movement, or simulation work.
 
 **Exit criteria:** zones load, clients transfer, radius queries are deterministic, no actor blocks on Mongo, and graceful shutdown drains state.
 

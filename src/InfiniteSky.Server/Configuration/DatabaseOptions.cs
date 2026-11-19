@@ -31,6 +31,11 @@ public sealed class DatabaseOptions
     public string AccountCollectionName { get; set; } = "account_mongooses";
 
     /// <summary>
+    /// Gets or sets the guild collection name. Verify this Mongoose-derived default against the deployment.
+    /// </summary>
+    public string GuildCollectionName { get; set; } = "guilds";
+
+    /// <summary>
     /// Gets or sets whether the required account username index is created when missing.
     /// Existing incompatible indexes are never dropped or changed.
     /// </summary>

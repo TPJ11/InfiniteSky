@@ -90,6 +90,19 @@ public sealed class MongoPersistenceContext : IDisposable
         }
     }
 
+    internal IMongoCollection<BsonDocument> GuildDocuments
+    {
+        get
+        {
+            if (_database is null)
+            {
+                throw new MongoPersistenceException(MongoPersistenceFailureKind.Disabled);
+            }
+
+            return _database.GetCollection<BsonDocument>(_settings.GuildCollectionName);
+        }
+    }
+
     public CancellationTokenSource CreateOperationToken(CancellationToken cancellationToken)
     {
         if (!_settings.Enabled)
@@ -250,6 +263,7 @@ public sealed class MongoPersistenceContext : IDisposable
         if (string.IsNullOrWhiteSpace(settings.ConnectionString)
             || string.IsNullOrWhiteSpace(settings.DatabaseName)
             || string.IsNullOrWhiteSpace(settings.AccountCollectionName)
+            || string.IsNullOrWhiteSpace(settings.GuildCollectionName)
             || settings.ServerSelectionTimeoutSeconds < 1
             || settings.ConnectTimeoutSeconds < 1
             || settings.OperationTimeoutSeconds < 1

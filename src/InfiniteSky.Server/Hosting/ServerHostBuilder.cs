@@ -1,8 +1,10 @@
 using InfiniteSky.Application.Authentication;
+using InfiniteSky.Application.Guilds;
 using InfiniteSky.Networking;
 using InfiniteSky.Persistence;
 using InfiniteSky.Server.Authentication;
 using InfiniteSky.Server.Configuration;
+using InfiniteSky.World;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,6 +53,7 @@ public static class ServerHostBuilder
                 ConnectionString = database.ConnectionString,
                 DatabaseName = database.DatabaseName,
                 AccountCollectionName = database.AccountCollectionName,
+                GuildCollectionName = database.GuildCollectionName,
                 EnsureIndexesOnStartup = database.EnsureIndexesOnStartup,
                 ResetActiveAccountsOnStartup = database.ResetActiveAccountsOnStartup,
                 ServerSelectionTimeoutSeconds = database.ServerSelectionTimeoutSeconds,
@@ -68,9 +71,18 @@ public static class ServerHostBuilder
         builder.Services.AddSingleton<MongoAccountAuthenticationRepository>();
         builder.Services.AddSingleton<IAccountAuthenticationRepository>(
             provider => provider.GetRequiredService<MongoAccountAuthenticationRepository>());
+        builder.Services.AddSingleton<MongoGuildRepository>();
+        builder.Services.AddSingleton<IGuildRepository>(
+            provider => provider.GetRequiredService<MongoGuildRepository>());
         builder.Services.AddSingleton<MongoPersistenceHostedService>();
         builder.Services.AddSingleton<IHostedService>(
             provider => provider.GetRequiredService<MongoPersistenceHostedService>());
+        builder.Services.AddSingleton<WorldRuntime>();
+        builder.Services.AddSingleton<WorldMetrics>();
+        builder.Services.AddSingleton<WorldClock>();
+        builder.Services.AddSingleton<WorldHostedService>();
+        builder.Services.AddSingleton<IHostedService>(
+            provider => provider.GetRequiredService<WorldHostedService>());
         builder.Services.AddSingleton<AuthenticationMetrics>();
         builder.Services.AddSingleton<ICredentialVerifier, LegacyPlaintextCredentialVerifier>();
         builder.Services.AddSingleton<IAuthenticationSessionStore, InMemoryAuthenticationSessionStore>();
