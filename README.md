@@ -4,6 +4,8 @@
 
 This repository contains the original Node.js server and its staged .NET 10 migration. The Node.js code remains the behavioral reference; the .NET server is not yet a playable or production-compatible replacement. The older [FruitSalad documentation](https://rawgit.com/LiamKarlMitchell/InfiniteSky/InfiniteSky_FruitSalad/FruitSalad/Documentation/index.html) describes legacy/alternate-runtime material.
 
+**Migration release status: NOT_READY.** Prompt 25 prepares a local, unpublished `infinite-sky-dotnet10-prompt25-rc1` review candidate for Windows x64 only. It is not a public release, playable MMORPG, original-client-compatible server, or production deployment. Networking and MongoDB are disabled by default; required game data is external and not packaged. See the [final migration report](docs/migration/FINAL_MIGRATION_REPORT.md), [release acceptance report](docs/migration/RELEASE_ACCEPTANCE_REPORT.md), [known issues](docs/KNOWN_ISSUES.md), and [release manifest](docs/migration/RELEASE_MANIFEST.md).
+
 The current C# host provides:
 
 - the approved modular project and dependency structure;
@@ -18,6 +20,17 @@ The current C# host provides:
 The host now loads explicitly selected legacy zone definitions, parses optional NPC/WREGION files, maintains zone lifecycle/readiness, and provides a source-compatible X/Z spatial candidate index. It also has an account-owned character repository and an internal player activation/cleanup boundary that registers players in a running zone and saves supported location fields on disconnect/shutdown. These services are not wired to character/world packets: the host does not yet support client character selection, world entry, spawn/despawn replication, movement packets, NPC/monster runtime spawning, zone transfers, terrain, or gameplay. The account-level session field does not enable GM commands; world chat dispatch and command services remain absent. With the default empty zone list, world health remains degraded rather than creating a placeholder zone. See the [feature parity matrix](docs/FEATURE_PARITY_MATRIX.md), [remaining feature gaps](docs/migration/REMAINING_FEATURE_GAPS.md), [completeness report](docs/migration/FEATURE_COMPLETENESS_REPORT.md), and [integration readiness assessment](docs/migration/INTEGRATION_READINESS.md).
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
+
+The only candidate artifact prepared in Prompt 25 is framework-dependent `win-x64` and requires the .NET 10 runtime. Windows 11 x64 was the validation environment; CI configuration for Ubuntu/Windows builds is not a Linux deployment guarantee. See [deployment instructions](docs/DEPLOYMENT.md), [operations](docs/OPERATIONS.md), [database notes](docs/DATABASE.md), and [testing](docs/TESTING.md).
+
+### Migration documentation
+
+- [Developer guide](docs/DEVELOPMENT.md)
+- [Protocol overview](docs/PROTOCOL.md) and [source-derived protocol specification](docs/protocol/PROTOCOL_SPECIFICATION.md)
+- [Administration support boundary](docs/ADMINISTRATION.md)
+- [Scripting support boundary](docs/SCRIPTING.md)
+- [Known issues and blockers](docs/KNOWN_ISSUES.md)
+- [Third-party notices](THIRD-PARTY-NOTICES.md)
 
 Prompt 20 adds a host-composed loopback login test covering authentication, session creation, duplicate login, reconnect, and shutdown cleanup using test persistence. This is not a MongoDB-backed or playable client journey: character/world packet handling, gameplay, scripts, and commands remain incomplete. See the [integration baseline](docs/migration/INTEGRATION_BASELINE.md), [runtime configuration](docs/migration/RUNTIME_CONFIGURATION.md), [test harness](docs/migration/INTEGRATION_TEST_HARNESS.md), and [scenario status](docs/migration/END_TO_END_TEST_SCENARIOS.md).
 

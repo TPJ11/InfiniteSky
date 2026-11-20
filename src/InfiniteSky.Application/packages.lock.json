@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "infinitesky.domain": {
+        "type": "Project"
+      },
+      "infinitesky.gamedata": {
+        "type": "Project",
+        "dependencies": {
+          "InfiniteSky.Domain": "[1.0.0, )",
+          "InfiniteSky.Protocol": "[1.0.0, )"
+        }
+      },
+      "infinitesky.protocol": {
+        "type": "Project",
+        "dependencies": {
+          "InfiniteSky.Domain": "[1.0.0, )"
+        }
+      },
+      "infinitesky.world": {
+        "type": "Project",
+        "dependencies": {
+          "InfiniteSky.Domain": "[1.0.0, )",
+          "InfiniteSky.GameData": "[1.0.0, )",
+          "InfiniteSky.Protocol": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

@@ -341,6 +341,12 @@ This overlay adds no feature IDs. It records Prompt 24 review evidence without u
 | Abuse resistance | NOT_STARTED | No online guessing limit, malformed-packet flood, slow-client, or send-queue saturation policy/test. |
 | Operational recovery documentation | IMPLEMENTED | Runbook documents only source-backed behavior; no production deployment or restore rehearsal has validated it. |
 
+## Prompt 25 final release reconciliation
+
+The final reconciliation parsed all 232 unique feature IDs and found no duplicates. Totals remain 136 `NOT_STARTED`, 8 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE`. Prompt 25 did not change any feature status.
+
+The release-readiness decision is separate from row statuses: **`NOT_READY`**. A local Windows x64 artifact does not complete the migration or verify original-client, database, gameplay, scripting, administration, security, or production behavior. The full subsystem evidence and accepted scope are in [FINAL_FEATURE_RECONCILIATION.md](migration/FINAL_FEATURE_RECONCILIATION.md) and [RELEASE_ACCEPTANCE_REPORT.md](migration/RELEASE_ACCEPTANCE_REPORT.md).
+
 ## Coverage notes
 
 - Comment-only captures, disabled registrations, duplicate aliases, and experimental FruitSalad functionality are retained as features, notes, or explicit gaps. They are not assumed equivalent to production behavior.

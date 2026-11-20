@@ -46,3 +46,16 @@ Thread-pool pending work items were zero at the end of each repetition after cle
 Use the commands and parameters in [PERFORMANCE_TEST_PLAN.md](./PERFORMANCE_TEST_PLAN.md). The harness writes JSON Lines containing each repetition's latency percentiles, CPU, allocations, heap/working-set snapshots, GC counts, active sessions, failures, and cleanup values. The test parameters describe an experiment, not actual player behavior.
 
 This is a Windows 11 development-host result with .NET SDK 10.0.401/runtime 10.0.12, loopback transport, disabled MongoDB, and an in-memory account repository. It is not compared with Node.js or an original client. No world/player workload, sustained gameplay soak, dense-zone, distributed-zone, database failure, send-queue saturation, or overload behavior was tested.
+
+## Prompt 25 verification rerun
+
+The same harness was rerun on Windows 11 x64 (`Microsoft Windows 10.0.26300`), SDK `10.0.401`, runtime `.NET 10.0.12`, and 24 reported logical processors. MongoDB was disabled, account data was generated in memory, and all listeners were loopback-only. Each profile used three repetitions, five seconds of idle retention, and a 1- or 5-client warmup as shown.
+
+| Concurrent clients | Successful auth attempts | Burst throughput median (range), requests/s | Login p50 median (range), ms | Login p95 median (range), ms | Cleanup / failures |
+|---:|---:|---:|---:|---:|---|
+| 1 | 3/3 | 1,493.7 (569.9–1,732.8) | 0.592 (0.508–1.414) | 0.592 (0.508–1.414) | All connections/sessions returned to zero; 0 send/receive failures |
+| 10 | 30/30 | 4,557.3 (3,107.4–5,430.9) | 0.580 (0.412–0.587) | 0.896 (0.756–1.628) | All connections/sessions returned to zero; 0 send/receive failures |
+| 50 | 150/150 | 8,199.3 (7,531.6–9,442.3) | 0.401 (0.254–0.887) | 0.609 (0.564–1.628) | All connections/sessions returned to zero; 0 send/receive failures |
+| 100 | 300/300 | 8,495.2 (8,105.8–9,304.1) | 0.267 (0.207–0.655) | 0.625 (0.597–0.989) | All connections/sessions returned to zero; 0 send/receive failures |
+
+The rerun validates only that this bounded login/authentication workload completed and cleaned up under the stated local conditions. It is not directly comparable to the Prompt 23 before/after measurements because host scheduling and run conditions vary; no production capacity or performance improvement is inferred. Active gameplay players and players-per-zone tested remain zero.

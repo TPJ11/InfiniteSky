@@ -372,3 +372,13 @@ The bounded static review and conditional findings are in [THREAT_MODEL.md](THRE
 No runtime or dependency upgrade was made because the confirmed issues require compatibility/deployment decisions and no live configuration was available. Operational procedures and residual risks are documented in [OPERATIONAL_RECOVERY.md](OPERATIONAL_RECOVERY.md) and [RESIDUAL_SECURITY_RISKS.md](RESIDUAL_SECURITY_RISKS.md); [PRODUCTION_HARDENING_CHECKLIST.md](PRODUCTION_HARDENING_CHECKLIST.md) explicitly records incomplete evidence. No security area was promoted to `VERIFIED` from static inspection.
 
 **Stop gate:** The .NET server is not ready for final release preparation or public deployment. Do not begin Prompt 25 or publish a release without explicit approval and resolution or formal acceptance of the documented release-blocking risks.
+
+## Prompt 25 — final release preparation and migration completion
+
+Prompt 25 was explicitly approved. The baseline, final gap audit, feature reconciliation, acceptance criteria/report, migration report, handover, operator/developer docs, and local candidate manifest are recorded under `docs/migration/` and `docs/`. The feature matrix retains its evidence-derived counts; no feature was promoted to `VERIFIED` merely because this is the last stage.
+
+The solution is set to restore from checked-in NuGet lockfiles; CI uses locked-mode restore. NuGet vulnerability review reported no vulnerable packages from the configured nuget.org source; outdated/deprecated package notices were documented, not upgraded without compatibility tests. A framework-dependent Windows x64 candidate is produced locally; there is no validated Linux, self-contained, AOT, container, or service deployment target.
+
+**Final readiness: `NOT_READY`.** Original-client/gameplay compatibility is unverified, complete character/world/gameplay handlers are absent, live MongoDB and representative BSON tests were skipped/unavailable, scripting and administration are not implemented, required assets are unavailable, and Prompt 24 high-severity credential risks remain. A package is not evidence that these blockers are resolved.
+
+**Final approval gate:** No public release, tag push, production deployment, or formal migration acceptance occurred. Stop and wait for explicit owner approval. Retain the original Node.js implementation.

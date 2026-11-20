@@ -209,5 +209,4 @@ TestResults/
 coverage/
 coverage.*
 *.nupkg
-packages.lock.json
 src/InfiniteSky.Server/appsettings.*.local.json
