@@ -72,6 +72,8 @@ Player and entity infrastructure currently requires an authenticated login sessi
 
 Gameplay migration remains incomplete and is not client-reachable. The Domain project now has unit-tested, source-derived XP/level/point and stat-allocation calculations; they are not connected to handlers, persistence, protocol messages, or derived-stat/vitals updates. Original game-data images such as `005_00001.IMG` are absent. Movement, combat, skills, items, NPCs/monsters, quests, social features, and economy are documented with their source limitations in [GAMEPLAY_IMPLEMENTATION_PLAN.md](docs/migration/GAMEPLAY_IMPLEMENTATION_PLAN.md) and [GAMEPLAY_SYSTEMS_IMPLEMENTATION.md](docs/migration/GAMEPLAY_SYSTEMS_IMPLEMENTATION.md).
 
+The .NET host does not load or execute the legacy Node.js VMScript modules and does not provide a JavaScript engine, plugin directory, plugin configuration, hot reload, or script event API. The root Node.js runtime's shared-global script contract and the separate FruitSalad RPC runtime are documented in [SCRIPTING_COMPATIBILITY_MATRIX.md](docs/migration/SCRIPTING_COMPATIBILITY_MATRIX.md); unported modules remain blocked/not started rather than being reported as compatible. Do not copy untrusted JavaScript or shell-evaluation behavior into the .NET host.
+
 ### Configure MongoDB account persistence
 
 MongoDB is disabled unless explicitly enabled. For a local development database with no authentication:

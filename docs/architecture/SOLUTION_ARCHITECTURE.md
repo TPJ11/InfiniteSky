@@ -411,17 +411,11 @@ Runtime reload is limited to safe values such as log levels and diagnostics swit
 
 ## Scripting
 
-The legacy server uses hot-reloaded JavaScript VM scripts for packets, generic behavior, commands, and plugins. The modern core must not execute gameplay scripts in the networking thread.
+The root Node.js server uses hot-loaded JavaScript modules for packets, generic behavior, database models, CLI/GM commands, and its built-in login/zone/world modules. They execute against shared mutable globals and live Node services; this is not a conventional isolated plugin API. The separate FruitSalad runtime uses child processes and BSON RPC and is not equivalent to root behavior.
 
-Recommended stages:
+Prompt 17 selected native C# migration of individually source-verified behavior. No embedded JavaScript engine, generic plugin API, script event bus, or hot-reload mechanism is approved or implemented. The existing `InfiniteSky.Scripting` project has no runtime source. Until an actual module has a typed owner and tests, its legacy behavior remains blocked rather than silently skipped. See [SCRIPTING_ENGINE_DECISION.md](../migration/SCRIPTING_ENGINE_DECISION.md) and [SCRIPTING_COMPATIBILITY_MATRIX.md](../migration/SCRIPTING_COMPATIBILITY_MATRIX.md).
 
-1. Convert bundled commands and packet handlers to C#.
-2. Preserve a narrow event/command script extension API for opt-in content.
-3. Load scripts through an isolated process or supported managed scripting host, with capability-limited inputs and timeouts.
-4. Publish immutable command/event DTOs; scripts return explicit result commands.
-5. Support controlled reload; never mutate live global objects.
-
-Do not ship arbitrary `eval`/shared-object VM behavior for production. Existing CLI `eval`-style functionality remains an admin-only development tool, not a scripting protocol.
+Do not ship arbitrary `eval`, shared-object VM behavior, or a claim of sandboxing in production. The legacy CLI's JavaScript/shell execution is not migrated and remains an administration/development concern, outside Prompt 17.
 
 ## Hosting, logging, and diagnostics
 

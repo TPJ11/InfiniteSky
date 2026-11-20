@@ -265,12 +265,13 @@ Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplied the sta
 
 ## Stage 11 — Scripting, administration, editors, and operations
 
-**Features:** `SCR-001..008`, `ADM-001..013`, `INT-011..014`.
+**Features:** `SCR-001..013`, `ADM-001..013`, `INT-011..014`.
 
 **Work:**
 
-- C# command ports;
-- isolated script/plugin capability;
+- native C# migration of source-verified server behavior;
+- source-backed event/script boundary only where a real migrated consumer requires it;
+- explicit disposition of the legacy VMScript and FruitSalad alternate runtime;
 - restricted CLI;
 - editor/spawn tooling decisions;
 - deployment/runbooks;
@@ -279,6 +280,8 @@ Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplied the sta
 **Dependencies:** all services commands call.
 
 **Exit criteria:** every tracked command/module is ported, isolated, or approved `NOT_APPLICABLE`; production tools have bounded privileges.
+
+**Prompt 17 outcome:** the root audit found shared-process VMScript execution, live global service dependencies, active packet/command module loaders, and filename-based built-in plugin startup; it did not find a conventional plugin API or a tracked root external plugin set. `InfiniteSky.Scripting` has no runtime implementation or JavaScript dependency. Native C# migration is selected for server-owned behavior, but the current source/API dependencies block a compatible scripting runtime. No generic extension host or embedded JavaScript engine was added. See the Prompt 17 documents and `MIGRATION_STATUS.md`; `SCR-001..013` remain individually tracked and no script is claimed migrated.
 
 ## Stage 12 — Compatibility soak, performance, and release candidate
 

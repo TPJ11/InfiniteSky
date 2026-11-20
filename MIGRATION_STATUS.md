@@ -4,7 +4,7 @@
 
 This file is the authoritative dashboard for the .NET 10 migration. Update it only from the feature matrix and linked test evidence.
 
-- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Prompt 16 has isolated XP and stat-allocation arithmetic slices in progress; full packet, data, entity simulation, database, and gameplay migration remains incomplete.
+- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Prompt 16 has isolated XP and stat-allocation arithmetic slices in progress; full packet, data, entity simulation, database, and gameplay migration remains incomplete. Prompt 17 audited legacy scripting and plugin behavior; no compatible runtime or native plugin API was added, and affected features are marked blocked/not started/not applicable in the matrix.
 - A feature may be `VERIFIED` only after its test/acceptance evidence exists and is linked.
 - `IMPLEMENTED` is not `VERIFIED`.
 - Blockers are documented below, in the matrix notes, and in `docs/migration/MIGRATION_RISKS.md`.
@@ -13,14 +13,14 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 | Metric | Count |
 |---|---:|
-| Total features | 227 |
-| NOT_STARTED | 159 |
+| Total features | 232 |
+| NOT_STARTED | 155 |
 | IN_PROGRESS | 4 |
 | IMPLEMENTED | 48 |
 | VERIFIED | 14 |
-| BLOCKED | 2 |
-| NOT_APPLICABLE | 0 |
-| Overall verified progress | 6.2% |
+| BLOCKED | 10 |
+| NOT_APPLICABLE | 1 |
+| Overall verified progress | 6.0% |
 
 Prompt 15 records full character/world protocol integration and full original-client player/entity compatibility as `BLOCKED` in the matrix because required codecs, derived stats, fixtures, and client evidence are absent. Foundation evidence is recorded in [FOUNDATION_IMPLEMENTATION.md](docs/architecture/FOUNDATION_IMPLEMENTATION.md).
 
@@ -40,10 +40,10 @@ Prompt 15 records full character/world protocol integration and full original-cl
 | Zones/spatial | 10 | 6 | 0 | 0 | 60% |
 | Entities/players | 21 | 11 | 0 | 2 | 52.4% |
 | Gameplay | 38 | 0 | 0 | 0 | 0% |
-| Scripting/plugins | 8 | 0 | 0 | 0 | 0% |
+| Scripting/plugins | 13 | 0 | 0 | 10 | 0% |
 | Administration | 13 | 0 | 0 | 0 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **227** | **48** | **14** | **2** | **27.3%** |
+| **Total** | **232** | **48** | **14** | **10** | **26.7%** |
 
 ## Completed domain model work
 
@@ -165,14 +165,20 @@ The following matrix features are explicitly `BLOCKED` or remain research gaps:
 - generic NPC interaction packet/data (`GP-026`);
 - experience/item/skill/monster information images and original-data gameplay vectors (`DAT-002..005`);
 - complete gameplay packet request/response layouts and original-client transcripts (`GP-007..038`);
-- unsupported external plugins (`SCR-007`);
+- root shared-VM, host API, and module lifecycle compatibility (`SCR-001`, `SCR-004`, `SCR-008`, `SCR-011..013`); external plugin references with no source are `NOT_APPLICABLE` (`SCR-007`);
 - representative production BSON and client data (`INT-006`, `INT-008`, `PER-003`);
 - complete Character/world packet integration and full player/entity compatibility (`ENT-020..021`);
 - supported scope of FruitSalad process/editor tooling (`INF-014..015`, `INT-011..012`).
 
 ## Prompt 16 — gameplay
 
-Source audit and implementation status are documented in [GAMEPLAY_IMPLEMENTATION_PLAN.md](docs/migration/GAMEPLAY_IMPLEMENTATION_PLAN.md) and [GAMEPLAY_SYSTEMS_IMPLEMENTATION.md](docs/migration/GAMEPLAY_SYSTEMS_IMPLEMENTATION.md). `GP-004` and `GP-005` are `IN_PROGRESS`: pure XP and stat-allocation arithmetic are covered by synthetic tests but have no game-data catalog, handlers, derived-stat/vitals integration, packet output, or persistence. All other gameplay features remain unimplemented; source defects and unknowns are documented instead of copied as assumed rules. Validation: restore passed; full build passed with 0 warnings/errors; full suite 178 passed, 0 failed, 2 opt-in MongoDB tests skipped; format verification passed. Prompt 17 is not started.
+Source audit and implementation status are documented in [GAMEPLAY_IMPLEMENTATION_PLAN.md](docs/migration/GAMEPLAY_IMPLEMENTATION_PLAN.md) and [GAMEPLAY_SYSTEMS_IMPLEMENTATION.md](docs/migration/GAMEPLAY_SYSTEMS_IMPLEMENTATION.md). `GP-004` and `GP-005` are `IN_PROGRESS`: pure XP and stat-allocation arithmetic are covered by synthetic tests but have no game-data catalog, handlers, derived-stat/vitals integration, packet output, or persistence. All other gameplay features remain unimplemented; source defects and unknowns are documented instead of copied as assumed rules. Validation: restore passed; full build passed with 0 warnings/errors; full suite 178 passed, 0 failed, 2 opt-in MongoDB tests skipped; format verification passed.
+
+## Prompt 17 — scripting and plugins
+
+The root Node.js VMScript, loaders, module dependency declarations, packet/command script directories, root lifecycle events, zone hook slots, configured plugin filenames, and alternate FruitSalad process/zone-script runtime are inventoried in [SCRIPTING_COMPATIBILITY_MATRIX.md](docs/migration/SCRIPTING_COMPATIBILITY_MATRIX.md). The selected migration strategy is native C# migration of individually source-verified server behavior; no embedded JavaScript runtime or generic plugin API was added because the root scripts execute against shared Node globals and unfinished live service APIs. No script or plugin is `IMPLEMENTED` or `VERIFIED`. `SCR-001..002`, `SCR-004..005`, `SCR-008`, and `SCR-011..013` are `BLOCKED`; `SCR-003`, `SCR-006`, `SCR-009..010` are `NOT_STARTED`; README-only external plugin references (`SCR-007`) are `NOT_APPLICABLE`. Prompt 18 commands remain out of scope.
+
+Decision, lifecycle, event, gameplay and security details are documented in [SCRIPTING_ENGINE_DECISION.md](docs/migration/SCRIPTING_ENGINE_DECISION.md), [SCRIPTING_IMPLEMENTATION.md](docs/migration/SCRIPTING_IMPLEMENTATION.md), [PLUGIN_LIFECYCLE.md](docs/migration/PLUGIN_LIFECYCLE.md), [SCRIPT_EVENT_SYSTEM.md](docs/migration/SCRIPT_EVENT_SYSTEM.md), [SCRIPTING_GAMEPLAY_INTEGRATION.md](docs/migration/SCRIPTING_GAMEPLAY_INTEGRATION.md), and [SCRIPTING_SECURITY_MODEL.md](docs/migration/SCRIPTING_SECURITY_MODEL.md). No original JavaScript files changed. No scripting tests or runtime integration tests are claimed because no execution behavior was implemented. Validation: restore passed; build passed with 0 warnings/errors; full suite 178 passed, 0 failed, 2 opt-in MongoDB tests skipped; format verification and `git diff --check` passed.
 
 ## Dependency warnings
 

@@ -15,7 +15,7 @@ This audit reconciles the tracked repository's functional source roots with `doc
 | `db/` | Mongo schemas and repositories | `PER-002..008`, `DOM-001..006` |
 | `commands/` | GM command functionality | `GP-032`, `ADM-001..011` |
 | `cli/` and `cli.js` | Operator REPL, commands, shell/JS eval | `ADM-012..013`, `INF-013` |
-| `vmscript/` | VM load/watch/reload/dependencies and CLI globals | `SCR-001..008` |
+| `vmscript/` | Root VM load/watch/reload/dependencies and CLI globals; backup/examples are not active runtime | `SCR-001..013` |
 | `restruct/` | Binary primitive library, tests, docs, vendor helper code | `PRO-003..004`; implementation uses tested primitive semantics rather than a vendored port |
 | `data/packets/` | Experimental/diagnostic packet captures | `PRO-032..033`, `INT-007` |
 | `data/spawninfo/` | NPC/MOB spawn corpus | `DAT-007`, `ZON-005`, `GP-023` |
@@ -27,7 +27,7 @@ This audit reconciles the tracked repository's functional source roots with `doc
 | `FruitSalad/Generic/`, `Commands/`, `Scripts/` | Alternate domain/data/command/event experiments | `DOM`, `GP`, `ADM`, `SCR-006` |
 | `FruitSalad/Documentation/` and public vendor assets | Generated docs and browser dependencies; not runtime server parity | Research/support only; no matrix runtime ID required |
 | `TSX_Client/` | Legacy client/reversing code and third-party binary tooling | `INT-013`; research dependency, never server runtime |
-| `plugins/` references | Optional Dropbox/GitHub/Google Drive behavior claimed in README; source absent/incomplete | `SCR-004`, `SCR-007`; formal blocker/exclusion required |
+| Plugin references/configuration | Root `config.plugins` filename list defaults empty; built-in modules are separate; no root `plugins/` source directory. README-only Dropbox/GitHub/Drive references have no tracked implementations. | `SCR-004`, `SCR-007` |
 | `README.md`, setup docs, batch/package manifests | Deployment and operator workflow | `INF-013`, `INF-016`, `INT-014..015` |
 | `LICENSE`, `.gitignore`, editor/linter metadata | Repository policy/tool metadata | No runtime feature; governance/deployment context only |
 
@@ -35,7 +35,7 @@ This audit reconciles the tracked repository's functional source roots with `doc
 
 | Root file | Classification |
 |---|---|
-| `main.js` | `INF-001/002/003/004/005/007/008/009`, `SCR-004` |
+| `main.js` | `INF-001/002/003/004/005/007/008/009`, `SCR-004`, `SCR-009` |
 | `server.js` | `INF-018`; original exports an unused/empty abstraction |
 | `login.js` | `INF-003`, `NET-001/005/009/010`, login application flows |
 | `world.js` | `INF-004/007`, `WLD-001..010`, `ENT-001..008`, gameplay dependencies |
@@ -47,7 +47,7 @@ This audit reconciles the tracked repository's functional source roots with `doc
 | `GameInfoLoader.js` | `DAT-001/009` |
 | `GameStep.js` | `INF-007`, `WLD-001` |
 | `GMCommand.js` | `ADM-001/002`, `SCR-005` |
-| `cli.js` and `cli/` | `ADM-012..013` |
+| `cli.js` and `cli/` | `ADM-012..013`, `SCR-008`, `SCR-012` |
 | `db.js` and `db/` | `PER-001..012` |
 | `util.js` | `INF-002/008/009`, `NET-006` |
 | `sandbox.js` | `SCR-008` |
