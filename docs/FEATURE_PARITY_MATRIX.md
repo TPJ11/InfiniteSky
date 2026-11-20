@@ -316,6 +316,31 @@ This operational roll-up adds no feature IDs and does not replace the per-featur
 | Sustained-load stability | IN_PROGRESS | Authenticated idle sessions were held for five seconds; no long-duration gameplay soak. |
 | Overload behavior | NOT_STARTED | Queue saturation, slow-client policy, and overload response were not tested. |
 
+## Prompt 24 security and reliability verification overlay
+
+This overlay adds no feature IDs. It records Prompt 24 review evidence without upgrading broad parity or production-readiness claims; no security row is marked `VERIFIED` from static inspection alone.
+
+| Hardening area | Status | Evidence / limitation |
+|---|---|---|
+| Dependency security | IN_PROGRESS | NuGet audit reported no vulnerable packages from nuget.org; legacy npm manifests have no lockfiles and were not reproducibly audited. |
+| Network hardening | IN_PROGRESS | Listeners default disabled/loopback; raw legacy login remains unencrypted if exposed to untrusted networks. |
+| Packet validation | IN_PROGRESS | Existing tests cover framing, bounds, truncation, fragmentation/coalescing, and connection limits; flood/resource exhaustion was not tested. |
+| Authentication security | IN_PROGRESS | Login/session failure tests pass; plaintext legacy password storage and distinct status responses remain compatibility risks. |
+| Session ownership | IN_PROGRESS | Per-process duplicate-session control and internal ownership checks exist; distributed and client character-session ownership remain unverified. |
+| Administrative authorization | BLOCKED | No .NET command dispatcher or remote admin handler; legacy thresholds are documented but not ported. |
+| Gameplay validation | BLOCKED | No client-reachable gameplay handlers; item/currency abuse cannot be verified. |
+| Persistence safety | IN_PROGRESS | Typed filters and synthetic mapping/configuration tests exist; MongoDB Testcontainers tests were skipped and remote TLS/configuration is unverified. |
+| Script trust boundary | BLOCKED | No .NET script runtime/plugin loader; legacy scripts run trusted in-process and are not sandboxed. |
+| Configuration security | IN_PROGRESS | Safe checked-in defaults and environment overrides are documented; production secret injection/deployment is untested. |
+| Secret handling | IN_PROGRESS | Bounded heuristic scan found no confirmed production credential; it is not an exhaustive secret scan. |
+| Logging safety | IN_PROGRESS | Existing redaction guidance and tests cover selected paths; no full production log review was performed. |
+| Concurrency reliability | IN_PROGRESS | Selected login/session/world component races are tested; multi-instance session and gameplay/persistence concurrency are unverified. |
+| Startup recovery | IN_PROGRESS | Invalid configuration and listener rollback are tested; production dependency/data failures are not fully exercised. |
+| Shutdown reliability | IN_PROGRESS | Login-session shutdown cleanup is tested; active-player saves and lossless shutdown are not established. |
+| Failure recovery | IN_PROGRESS | Selected deterministic failure paths are tested; live MongoDB/network/script/zone fault recovery remains untested or unavailable. |
+| Abuse resistance | NOT_STARTED | No online guessing limit, malformed-packet flood, slow-client, or send-queue saturation policy/test. |
+| Operational recovery documentation | IMPLEMENTED | Runbook documents only source-backed behavior; no production deployment or restore rehearsal has validated it. |
+
 ## Coverage notes
 
 - Comment-only captures, disabled registrations, duplicate aliases, and experimental FruitSalad functionality are retained as features, notes, or explicit gaps. They are not assumed equivalent to production behavior.

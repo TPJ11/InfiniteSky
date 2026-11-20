@@ -361,4 +361,14 @@ Evidence and reproducible commands:
 
 The duplicate receive/send loop starts in `NetworkConnection.StartAsync` were corrected after an ordered-frame test failed before the change and passed afterward. Measurements did not establish a consistent performance improvement, and no unrelated speculative optimization was made. Full world/gameplay, live MongoDB, original-client, Node differential, long-soak, and overload workloads remain blocked or untested.
 
-**Stop gate:** Do not begin Prompt 24 security review or Prompt 25 release preparation without explicit approval. Do not mark the server-wide performance budget verified until representative implemented world/gameplay workloads and their measured evidence exist.
+**Stop gate:** Prompt 24 was subsequently approved and is recorded below. Do not begin Prompt 25 release preparation without explicit approval. Do not mark the server-wide performance budget verified until representative implemented world/gameplay workloads and their measured evidence exist.
+
+## Prompt 24 — Security, reliability, and production hardening
+
+Prompt 24 captured a clean pre-change baseline at commit `4159f887517fbb34145adfa92651b6d07a24c733`: restore/build succeeded, the build had 0 warnings/errors, and the full suite reported 188 passed with 2 opt-in MongoDB integration tests skipped. NuGet vulnerability/deprecation/outdated-package audits and a bounded secret-pattern scan are recorded in [SECURITY_HARDENING_BASELINE.md](SECURITY_HARDENING_BASELINE.md).
+
+The bounded static review and conditional findings are in [THREAT_MODEL.md](THREAT_MODEL.md) and [SECURITY_FINDINGS.md](SECURITY_FINDINGS.md). It confirmed that raw legacy TCP login is unencrypted and the legacy account password field remains plaintext. These cannot be safely changed without client and account migration evidence. MongoDB TLS, online guessing controls, and multi-instance session ownership remain conditional/unverified. Administrative, scripting, world-character, and gameplay network handlers remain blocked/absent; absence is not marked secure.
+
+No runtime or dependency upgrade was made because the confirmed issues require compatibility/deployment decisions and no live configuration was available. Operational procedures and residual risks are documented in [OPERATIONAL_RECOVERY.md](OPERATIONAL_RECOVERY.md) and [RESIDUAL_SECURITY_RISKS.md](RESIDUAL_SECURITY_RISKS.md); [PRODUCTION_HARDENING_CHECKLIST.md](PRODUCTION_HARDENING_CHECKLIST.md) explicitly records incomplete evidence. No security area was promoted to `VERIFIED` from static inspection.
+
+**Stop gate:** The .NET server is not ready for final release preparation or public deployment. Do not begin Prompt 25 or publish a release without explicit approval and resolution or formal acceptance of the documented release-blocking risks.

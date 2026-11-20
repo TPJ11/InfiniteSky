@@ -252,4 +252,18 @@ The new ordered-frame regression test failed before runtime changes and passed a
 
 Feature-matrix totals now reflect `INT-009` moving to `IN_PROGRESS`: 136 `NOT_STARTED`, 8 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). No full-server performance feature is marked `VERIFIED`. MongoDB, original Node.js/client comparisons, gameplay/world load, spatial visibility load, sustained gameplay soak, and overload testing remain unavailable or blocked.
 
-**Stop gate:** Prompt 23 is limited to this measured foundation. Do not begin Prompt 24 security review or Prompt 25 release preparation without explicit approval.
+**Stop gate:** Prompt 23 is limited to this measured foundation. Prompt 24 was subsequently approved and is recorded below. Do not begin Prompt 25 release preparation without explicit approval.
+
+## Prompt 24 — security, reliability, and production hardening
+
+Baseline captured at `4159f887517fbb34145adfa92651b6d07a24c733` on a clean `master` worktree. Windows 11 Pro x64, .NET SDK 10.0.401/runtime 10.0.12. Restore and full solution build succeeded with 0 warnings/errors; tests reported 188 passed, 0 failed, and 2 opt-in MongoDB Testcontainers tests skipped.
+
+Created the security baseline, threat model, findings register, implementation decisions, security/reliability test results, operational recovery runbook, residual risk register, and production-hardening checklist under `docs/migration/`. NuGet's vulnerability audit reported no vulnerable packages from nuget.org; available updates and legacy test dependencies were documented without unverified upgrades. A bounded tracked-file credential scan found no confirmed production credential, but is not an exhaustive secret audit.
+
+The bounded source review confirmed conditional high-impact risks in the legacy-compatible raw TCP login transport and plaintext account password storage; neither was changed because doing so without an approved client/account migration would break compatibility. It also recorded conditional MongoDB TLS configuration, distinct login status enumeration, and missing login rate limiting. No GM command dispatcher, script runtime, or gameplay world-packet handler exists in .NET; those areas are blocked/absent, not verified secure. Multi-instance session uniqueness and global active-flag startup reset remain unverified outside the documented single-process model.
+
+No runtime or dependency code changes were made: no safe compatibility-preserving fix or deployed database/network configuration was available to validate. No feature was marked `VERIFIED` based solely on static inspection. Original Node.js source remains unchanged. The server is **not ready for final release preparation or public deployment**; see [PRODUCTION_HARDENING_CHECKLIST.md](docs/migration/PRODUCTION_HARDENING_CHECKLIST.md) and [RESIDUAL_SECURITY_RISKS.md](docs/migration/RESIDUAL_SECURITY_RISKS.md).
+
+The feature matrix adds a Prompt 24 security/reliability overlay without new feature IDs or status transitions; totals remain 136 `NOT_STARTED`, 8 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232).
+
+**Stop gate:** Prompt 24 documents unresolved compatibility and deployment risks. Do not begin Prompt 25 or publish a release without explicit approval and resolution/acceptance of the release-blocking risks.
