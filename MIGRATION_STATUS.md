@@ -5,6 +5,7 @@
 This file is the authoritative dashboard for the .NET 10 migration. Update it only from the feature matrix and linked test evidence.
 
 - The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Prompt 16 has isolated XP and stat-allocation arithmetic slices in progress; full packet, data, entity simulation, database, and gameplay migration remains incomplete. Prompt 17 audited legacy scripting and plugin behavior; no compatible runtime or native plugin API was added, and affected features are marked blocked/not started/not applicable in the matrix.
+- Prompt 20 verifies a bounded host-composed TCP login/session path with test persistence, duplicate rejection, reconnect, shutdown cleanup, and listener-start rollback. It does not complete character/world/gameplay integration or verify live MongoDB/original-client compatibility.
 - A feature may be `VERIFIED` only after its test/acceptance evidence exists and is linked.
 - `IMPLEMENTED` is not `VERIFIED`.
 - Blockers are documented below, in the matrix notes, and in `docs/migration/MIGRATION_RISKS.md`.
@@ -14,8 +15,8 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 232 |
-| NOT_STARTED | 141 |
-| IN_PROGRESS | 4 |
+| NOT_STARTED | 138 |
+| IN_PROGRESS | 7 |
 | IMPLEMENTED | 48 |
 | VERIFIED | 14 |
 | BLOCKED | 24 |
@@ -196,6 +197,18 @@ The source coverage audit was rechecked against the 232-row feature matrix and t
 Prompt 19 closed the account authority data-path gap: the Mongo authentication projection includes account `Level`, the raw BSON mapper preserves finite numeric representations and defaults missing/null to 0, and the authenticated session carries this server-derived field. Non-numeric/non-finite values fail closed. This is not command authorization or feature parity; `AUTH-003` and `SES-001` remain `IMPLEMENTED`, and all command/chat features remain blocked. No gameplay, packet, schema, or Node.js implementation was invented or modified.
 
 Prompt 19 validation: `dotnet restore InfiniteSky.sln` succeeded; the full solution build passed with 0 warnings/errors; all 184 runnable tests passed and the 2 opt-in MongoDB integration tests were skipped; `dotnet format InfiniteSky.sln --verify-no-changes --no-restore` and `git diff --check` passed. The focused authentication integration project passed 60/60; persistence passed 23 with 2 container tests skipped. A final repository-wide documentation scan confirmed all 781 local Markdown links target existing files. Original Node.js and JSON data files remain unchanged. Live MongoDB behavior is not verified.
+
+## Prompt 20 — full-system integration and end-to-end baseline
+
+The pre-change snapshot is recorded in [INTEGRATION_BASELINE.md](docs/migration/INTEGRATION_BASELINE.md): commit `073a7cbe7f00df0f752c9c6e9a629f6946cf4f56`, clean `master`, .NET SDK 10.0.401, restore/build/format success, 184 passing tests and 2 skipped opt-in MongoDB tests. Startup composition and dependency order are documented in [FULL_SYSTEM_INTEGRATION.md](docs/migration/FULL_SYSTEM_INTEGRATION.md).
+
+Prompt 20 added a host-composed loopback test that uses the actual Generic Host, listeners, framing, login sink, authentication service, and session store with a deterministic test account repository. It verifies successful legacy login response, duplicate-account rejection, disconnect cleanup, reconnect, and session/connection cleanup on host shutdown. A second test verifies that failure to bind the world port releases the login listener during startup rollback. Persistence is substituted in the socket flow; these tests do not establish live MongoDB or character/world compatibility.
+
+The scenario ledger is in [END_TO_END_TEST_SCENARIOS.md](docs/migration/END_TO_END_TEST_SCENARIOS.md); harness limits and commands are in [INTEGRATION_TEST_HARNESS.md](docs/migration/INTEGRATION_TEST_HARNESS.md); runtime settings are in [RUNTIME_CONFIGURATION.md](docs/migration/RUNTIME_CONFIGURATION.md); diagnosed test/setup failures and deferred failures are in [INTEGRATION_FAILURES_AND_FIXES.md](docs/migration/INTEGRATION_FAILURES_AND_FIXES.md). The [integration readiness report](docs/migration/INTEGRATION_READINESS.md) concludes the server is **not ready for original-client testing**. Character/world dispatch, active-player network ownership, data assets, gameplay, scripts, commands, and live persistence remain blocked or unimplemented. Prompt 21 has not started.
+
+Matrix statuses `INT-001`, `INT-010`, and `INT-015` moved from `NOT_STARTED` to `IN_PROGRESS` for the tested login slice, host shutdown/reconnect evidence, and Prompt 20 documentation; their full acceptance criteria remain unmet. The matrix totals are now 138 `NOT_STARTED`, 7 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 24 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). No overall server or full client journey was marked `VERIFIED`.
+
+Prompt 20 validation: `dotnet restore InfiniteSky.sln` succeeded; `dotnet build InfiniteSky.sln --no-restore` passed with 0 warnings and 0 errors; `dotnet test InfiniteSky.sln --no-build` passed 186 tests with 0 failures and 2 opt-in MongoDB tests skipped (Domain 50, Protocol 24, GameData 5, World 22, Server integration 62, Persistence 23 passed); the focused host/socket test filter passed 2/2; `dotnet format InfiniteSky.sln --verify-no-changes --no-restore` and `git diff --check` passed. A repository-wide scan checked 822 local Markdown file links with no broken targets. Original Node.js files and production data were not modified. Live MongoDB, character/world workflows, and original-client compatibility remain unverified.
 
 ## Dependency warnings
 

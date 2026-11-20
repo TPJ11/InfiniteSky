@@ -19,6 +19,8 @@ The host now loads explicitly selected legacy zone definitions, parses optional 
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
 
+Prompt 20 adds a host-composed loopback login test covering authentication, session creation, duplicate login, reconnect, and shutdown cleanup using test persistence. This is not a MongoDB-backed or playable client journey: character/world packet handling, gameplay, scripts, and commands remain incomplete. See the [integration baseline](docs/migration/INTEGRATION_BASELINE.md), [runtime configuration](docs/migration/RUNTIME_CONFIGURATION.md), [test harness](docs/migration/INTEGRATION_TEST_HARNESS.md), and [scenario status](docs/migration/END_TO_END_TEST_SCENARIOS.md).
+
 From the repository root:
 
 ```powershell
