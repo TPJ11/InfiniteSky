@@ -144,6 +144,23 @@ public sealed class FrameAndStructureTests
     }
 
     [Fact]
+    public void WorldHandshakeMatchesOriginalNodeLayout()
+    {
+        byte[] fixture = FixtureLoader.ReadHex("world-handshake.hex.txt");
+        var handshake = LegacyWorldHandshake.Decode(new LegacyBinaryReader(fixture));
+
+        Assert.Equal("PlayerName", handshake.Name);
+        Assert.Equal((byte)2, handshake.Slot);
+        Assert.Equal(0x01020304u, handshake.MapId);
+
+        var writer = new LegacyBinaryWriter();
+        handshake.Encode(writer);
+
+        Assert.Equal(LegacyWorldHandshake.WireSize, writer.Offset);
+        Assert.Equal(fixture, writer.ToArray());
+    }
+
+    [Fact]
     public void MapLoadReplyAndUncompressedEnvelopeRoundTrip()
     {
         var writer = new LegacyBinaryWriter();

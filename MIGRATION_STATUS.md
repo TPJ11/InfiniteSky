@@ -41,11 +41,11 @@ Prompt 15 records full character/world protocol integration and full original-cl
 | World engine | 13 | 3 | 0 | 0 | 23.1% |
 | Zones/spatial | 10 | 6 | 0 | 0 | 60% |
 | Entities/players | 21 | 11 | 0 | 2 | 52.4% |
-| Gameplay | 38 | 0 | 0 | 0 | 0% |
-| Scripting/plugins | 13 | 0 | 0 | 10 | 0% |
+| Gameplay | 38 | 0 | 0 | 1 | 0% |
+| Scripting/plugins | 13 | 0 | 0 | 8 | 0% |
 | Administration | 13 | 0 | 0 | 13 | 0% |
-| Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **232** | **48** | **14** | **24** | **26.7%** |
+| Integration/compatibility | 16 | 0 | 0 | 1 | 0% |
+| **Total** | **232** | **48** | **14** | **25** | **26.7%** |
 
 ## Completed domain model work
 
@@ -229,3 +229,15 @@ Prompt 21 validation: `dotnet restore InfiniteSky.sln` succeeded; the full solut
 - Do not port scripting/eval into production.
 - Do not claim database migration readiness without dry-run and representative BSON comparison.
 - Do not mark any P0 feature `VERIFIED` without linked executable evidence.
+
+## Prompt 22 — regression and behavioral parity verification
+
+The pre-change baseline was captured at commit `c631b4514828b9a98a6f390118e029d491d44fd7` with a clean worktree. Restore succeeded; the complete solution built with 0 warnings/errors; the suite passed 186 tests, failed 0 and skipped the 2 opt-in MongoDB Testcontainers tests (6.09 seconds). See [REGRESSION_BASELINE.md](docs/migration/REGRESSION_BASELINE.md).
+
+The final Prompt 22 validation ran restore, full solution build, the complete suite, `dotnet format --verify-no-changes`, `git diff --check`, and a separate coverage-enabled complete suite. The final test result was 187 passed, 0 failed, 2 skipped. The new test adds a source-derived 18-byte `0x01` world-handshake request fixture; it does not add the raw `0x15` success response or a world handler. Test groups and provenance are in [REGRESSION_TEST_INVENTORY.md](docs/migration/REGRESSION_TEST_INVENTORY.md); feature-level evidence and gaps are in [BEHAVIOURAL_PARITY_COVERAGE.md](docs/migration/BEHAVIOURAL_PARITY_COVERAGE.md).
+
+Three full-suite repeat runs before the added test had identical results and no observed flakiness. The final coverage-enabled run also passed. Coverage is reported by project/package in [COMPREHENSIVE_REGRESSION_REPORT.md](docs/migration/COMPREHENSIVE_REGRESSION_REPORT.md); percentages are not parity evidence. No Level A original-client or Level B Node differential evidence exists. Both MongoDB container tests were skipped; no live persistence result is claimed.
+
+The matrix retains its statuses: 137 `NOT_STARTED`, 7 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). The subsystem roll-up above was reconciled with the matrix. Several incomplete acceptance claims were clarified, the stale 205-feature note and incorrect listener-port notes were corrected, and the Prompt 22 issue/fix record is in [REGRESSION_ISSUES_AND_FIXES.md](docs/migration/REGRESSION_ISSUES_AND_FIXES.md).
+
+Repeatable commands and external prerequisites are in [TEST_EXECUTION_GUIDE.md](docs/migration/TEST_EXECUTION_GUIDE.md). [VERIFICATION_READINESS.md](docs/migration/VERIFICATION_READINESS.md) records that the server is not ready for server-wide parity, original-client certification, live database compatibility or representative performance testing. Prompt 23 work has not started; explicit approval remains required.
