@@ -4,7 +4,7 @@
 
 The .NET solution has a repeatable, passing foundation test suite and source-derived evidence for a limited set of protocol, authentication, persistence-mapping, domain and world-management slices. It is **not ready to claim server-wide behavioral parity**, live persistence compatibility, or original-client compatibility.
 
-This report closes Prompt 22 only. It does not authorize Prompt 23 or broad performance optimization.
+This report records Prompt 22 readiness and remains applicable to the current migration. Prompt 23 was subsequently approved and ran a limited loopback login/session benchmark; that evidence does not make the server ready for representative full-server performance testing.
 
 ## Evidence availability
 
@@ -33,7 +33,7 @@ This report closes Prompt 22 only. It does not authorize Prompt 23 or broad perf
 | End-to-end | Loopback login path with test account persistence | Character selection, world/zone entry, gameplay, Mongo and client flow | Not ready |
 | Differential/original client | None | Missing runtime/client prerequisites and executable workflow | Blocked |
 | Concurrency/failure recovery | Selected deterministic concurrency/failure cases | Races and recovery across DB, player gameplay, inventory, scripting and shutdown are absent | Partial |
-| Performance | No benchmark project or workload baseline | Complete representative workloads and accepted performance budgets are absent | Not ready |
+| Performance | Prompt 23 adds a measured real-socket login/authentication baseline at 1/10/50/100 connections and five-second idle sessions | World/gameplay workflows, live MongoDB, complete protocol traffic, representative data, and long-duration workloads are absent | Not ready for full-server performance claims |
 
 ## Reliability and limitations
 
@@ -45,4 +45,4 @@ This report closes Prompt 22 only. It does not authorize Prompt 23 or broad perf
 
 ## Gate
 
-Before any later performance stage, first establish a complete source-supported client workflow, representative isolated MongoDB/BSON evidence, missing game data/protocol fixtures, and deterministic scenario workloads. Performance results from the current host/login foundation alone would not represent the migrated MMORPG server.
+The Prompt 23 host/login measurements are valid only for the implemented foundation and are documented in [PERFORMANCE_BENCHMARK_RESULTS.md](./PERFORMANCE_BENCHMARK_RESULTS.md). They do not represent the migrated MMORPG server. Full-server performance work still requires implemented source-supported world/gameplay workflows, representative fixtures/data, isolated persistence evidence, and workload-specific measurements. The original-client, Node differential, and live MongoDB compatibility gates remain unresolved.

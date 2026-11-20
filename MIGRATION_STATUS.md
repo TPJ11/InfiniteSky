@@ -16,8 +16,8 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 232 |
-| NOT_STARTED | 137 |
-| IN_PROGRESS | 7 |
+| NOT_STARTED | 136 |
+| IN_PROGRESS | 8 |
 | IMPLEMENTED | 48 |
 | VERIFIED | 14 |
 | BLOCKED | 25 |
@@ -240,4 +240,16 @@ Three full-suite repeat runs before the added test had identical results and no 
 
 The matrix retains its statuses: 137 `NOT_STARTED`, 7 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). The subsystem roll-up above was reconciled with the matrix. Several incomplete acceptance claims were clarified, the stale 205-feature note and incorrect listener-port notes were corrected, and the Prompt 22 issue/fix record is in [REGRESSION_ISSUES_AND_FIXES.md](docs/migration/REGRESSION_ISSUES_AND_FIXES.md).
 
-Repeatable commands and external prerequisites are in [TEST_EXECUTION_GUIDE.md](docs/migration/TEST_EXECUTION_GUIDE.md). [VERIFICATION_READINESS.md](docs/migration/VERIFICATION_READINESS.md) records that the server is not ready for server-wide parity, original-client certification, live database compatibility or representative performance testing. Prompt 23 work has not started; explicit approval remains required.
+Repeatable commands and external prerequisites are in [TEST_EXECUTION_GUIDE.md](docs/migration/TEST_EXECUTION_GUIDE.md). [VERIFICATION_READINESS.md](docs/migration/VERIFICATION_READINESS.md) records that the server is not ready for server-wide parity, original-client certification, live database compatibility or representative full-server performance testing. Prompt 23 was subsequently approved and is recorded below.
+
+## Prompt 23 — performance, scalability, and load testing
+
+The pre-optimization source snapshot is commit `76815fdeca856de07a1fb85c5cbe682a87bc3532`, captured on a clean `master` worktree. The Windows 11 / .NET 10 environment, pre-change restore/build/test results, server and database configuration, and measured baseline are in [PERFORMANCE_BASELINE.md](docs/migration/PERFORMANCE_BASELINE.md). The source-grounded workloads and reproducible commands are in [PERFORMANCE_TEST_PLAN.md](docs/migration/PERFORMANCE_TEST_PLAN.md).
+
+Added a dependency-free Release console harness to the solution. It starts the actual host, uses real loopback TCP, source-compatible login packets, isolated in-memory accounts, and reports burst latency/throughput plus five-second idle-session process metrics. It successfully tested 1, 10, 50, and 100 simultaneous connections/sessions in three repetitions, with all authentications successful and cleanup returning to zero. This does not measure active players, world/gameplay traffic, MongoDB, or production capacity. Exact before/after results and limitations are in [PERFORMANCE_BENCHMARK_RESULTS.md](docs/migration/PERFORMANCE_BENCHMARK_RESULTS.md) and [SCALABILITY_LIMITS.md](docs/migration/SCALABILITY_LIMITS.md).
+
+The new ordered-frame regression test failed before runtime changes and passed after `NetworkConnection.StartAsync` was corrected to start a single receive loop after the connection-open callback and a single send loop before it. This restores the intended ordering/ownership invariant. Before/after performance results are mixed; no consistent throughput improvement is claimed. The change rationale and rejected candidates are recorded in [PERFORMANCE_OPTIMIZATIONS.md](docs/migration/PERFORMANCE_OPTIMIZATIONS.md).
+
+Feature-matrix totals now reflect `INT-009` moving to `IN_PROGRESS`: 136 `NOT_STARTED`, 8 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). No full-server performance feature is marked `VERIFIED`. MongoDB, original Node.js/client comparisons, gameplay/world load, spatial visibility load, sustained gameplay soak, and overload testing remain unavailable or blocked.
+
+**Stop gate:** Prompt 23 is limited to this measured foundation. Do not begin Prompt 24 security review or Prompt 25 release preparation without explicit approval.

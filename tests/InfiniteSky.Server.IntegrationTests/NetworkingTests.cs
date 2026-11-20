@@ -172,6 +172,60 @@ public sealed class NetworkingTests
     }
 
     [Fact]
+    public async Task TcpListenerProcessesMultipleFramesOnOneOrderedReceiveLoop()
+    {
+        const int frameCount = 64;
+        var manager = new ConnectionManager(10);
+        var metrics = new NetworkingMetrics();
+        var sink = new OrderedFrameRecordingSink(frameCount);
+        var loggerFactory = NullLoggerFactory.Instance;
+        var options = new NetworkingOptions
+        {
+            MaxReceiveBufferBytes = 10240,
+            SendQueueCapacity = 16,
+            IdleTimeoutSeconds = 0,
+            ConnectionShutdownTimeoutSeconds = 5,
+        };
+        var listener = new LegacyTcpListener(
+            NetworkEndpointKind.Login,
+            IPAddress.Loopback,
+            0,
+            manager,
+            sink,
+            LegacyCorePacketRegistry.CreateLogin(),
+            metrics,
+            loggerFactory.CreateLogger<LegacyTcpListener>(),
+            loggerFactory,
+            options);
+
+        try
+        {
+            await listener.StartAsync(CancellationToken.None);
+            IPEndPoint endpoint = Assert.IsType<IPEndPoint>(listener.LocalEndPoint);
+            using var client = new TcpClient();
+            await client.ConnectAsync(endpoint.Address, endpoint.Port);
+            await WaitUntilAsync(() => manager.Count == 1, TimeSpan.FromSeconds(2));
+
+            for (byte marker = 0; marker < frameCount; marker++)
+            {
+                await client.GetStream().WriteAsync(CreateFrame(0x03, 91, marker));
+            }
+
+            byte[] observed = await sink.Completed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(
+                Enumerable.Range(0, frameCount).Select(static marker => (byte)marker),
+                observed);
+            Assert.Equal(1, sink.MaximumConcurrentFrames);
+        }
+        finally
+        {
+            await listener.StopAsync(CancellationToken.None);
+            await listener.DisposeAsync();
+            metrics.Dispose();
+        }
+    }
+
+    [Fact]
     public async Task TcpListenerRejectsConnectionAtLimitAndDisconnectsExcess()
     {
         LegacyPacketRegistry registry = LegacyCorePacketRegistry.CreateLogin();
@@ -255,10 +309,11 @@ public sealed class NetworkingTests
         await listener.DisposeAsync();
     }
 
-    private static byte[] CreateFrame(byte opcode, int payloadSize)
+    private static byte[] CreateFrame(byte opcode, int payloadSize, byte marker = 0)
     {
         var frame = new byte[9 + payloadSize];
         frame[8] = opcode;
+        frame.AsSpan(9).Fill(marker);
         return frame;
     }
 
@@ -308,5 +363,59 @@ public sealed class NetworkingTests
         {
             return ValueTask.CompletedTask;
         }
+    }
+
+    private sealed class OrderedFrameRecordingSink(int frameCount) : IIncomingPacketSink
+    {
+        private readonly byte[] _markers = new byte[frameCount];
+        private int _received;
+        private int _completed;
+        private int _activeFrames;
+        private int _maximumConcurrentFrames;
+
+        public TaskCompletionSource<byte[]> Completed { get; } =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public int MaximumConcurrentFrames => Volatile.Read(ref _maximumConcurrentFrames);
+
+        public ValueTask OnConnectionOpenedAsync(
+            NetworkConnection connection,
+            CancellationToken cancellationToken)
+            => ValueTask.CompletedTask;
+
+        public async ValueTask OnFrameAsync(
+            NetworkConnection connection,
+            LegacyProtocolFrame frame,
+            CancellationToken cancellationToken)
+        {
+            int active = Interlocked.Increment(ref _activeFrames);
+            int maximum;
+            while (active > (maximum = Volatile.Read(ref _maximumConcurrentFrames))
+                && Interlocked.CompareExchange(
+                    ref _maximumConcurrentFrames,
+                    active,
+                    maximum) != maximum)
+            {
+            }
+
+            int position = Interlocked.Increment(ref _received) - 1;
+            if (position < _markers.Length)
+            {
+                _markers[position] = frame.Payload[0];
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(10), cancellationToken);
+            Interlocked.Decrement(ref _activeFrames);
+            if (Interlocked.Increment(ref _completed) == frameCount)
+            {
+                Completed.TrySetResult(_markers);
+            }
+        }
+
+        public ValueTask OnUnknownOpcodeAsync(
+            NetworkConnection connection,
+            byte opcode,
+            CancellationToken cancellationToken)
+            => ValueTask.CompletedTask;
     }
 }

@@ -94,7 +94,6 @@ public sealed partial class NetworkConnection : IAsyncDisposable
             _state = NetworkConnectionState.Initialising;
         }
 
-        _receiveTask = ReceiveLoopAsync();
         _sendTask = SendLoopAsync();
 
         lock (_stateSync)
@@ -102,7 +101,6 @@ public sealed partial class NetworkConnection : IAsyncDisposable
             _state = NetworkConnectionState.Connected;
         }
 
-        _sendTask = SendLoopAsync();
         _metrics.Accepted();
         if (_logger.IsEnabled(LogLevel.Information))
         {

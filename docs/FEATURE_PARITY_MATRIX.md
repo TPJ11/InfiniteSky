@@ -241,7 +241,7 @@
 | INT-006 | Integration | MongoDB legacy data migration | all `db/*.js` and data handlers | Existing collections with sparse Mixed data | `tools/InfiniteSky.DataCompare` | PER-011 | XL | P0 | NOT_STARTED | Dry-run and shadow comparison show zero loss of selected fields | Requires representative production fixture |
 | INT-007 | Integration | Packet fixture harness | `data/packets`, protocol docs | Captures and reconstructed fixtures | `InfiniteSky.Protocol.Tests` / fixture runner | PRO-001..033 | L | P0 | NOT_STARTED | All classified fixtures execute in CI with stable hashes | — |
 | INT-008 | Integration | Client compatibility soak | current Node server and client protocol | Long-lived gameplay under actual legacy client | `InfiniteSky.Server.IntegrationTests` | INT-001..005 | XL | P0 | BLOCKED | Configured soak completes with no disconnect/protocol regressions | No original client executable/build is available in the repository/workspace; Prompt 21 performed no real-client test |
-| INT-009 | Integration | Performance budget | hot packet/spatial/save paths | No formal budgets | `tests/performance` / benchmark suite | INF-010, WLD-002, NET-002, PER-012 | L | P1 | NOT_STARTED | Baseline throughput, tick p95, allocation and GC limits documented/met | Include 10/100/target concurrent profiles |
+| INT-009 | Integration | Performance budget | hot packet/spatial/save paths | No formal budgets | `tools/InfiniteSky.PerformanceHarness` plus future full workload suite | INF-010, WLD-002, NET-002, PER-012 | L | P1 | IN_PROGRESS | Baseline throughput, tick p95, allocation and GC limits documented/met | Prompt 23 measures only loopback login/authentication and idle sessions at 1/10/50/100; full server budgets remain blocked |
 | INT-010 | Integration | Graceful restart/reconnect | main/db/world disconnects | Partial save/logout logic | `InfiniteSky.Server.IntegrationTests` | INF-006, PER-012, NET-009 | L | P0 | IN_PROGRESS | Restart drains, account status recovers, reconnect resumes saved state | Host shutdown closes an active login session and login reconnect is tested; active-player saves/restart recovery remain unverified |
 | INT-011 | Integration | FruitSalad item editor | `FruitSalad/Processes/ItemEditor/**` | Express/socket.io item editor | `tools/` / admin data tool | INF-012, DAT-003 | XL | P3 | NOT_STARTED | Required editing flows reproduced or explicitly excluded | Experimental tooling |
 | INT-012 | Integration | FruitSalad spawn editor/logger | `SpawnEdit`, `SpawnLogger`, Grunt navigation tools | UDP/logger/editor for spawn/navigation | `tools/` / spawn data tool | DAT-007, ZON-005 | XL | P3 | NOT_STARTED | Required import/export/edit validation passes | Original tooling fragmented |
@@ -294,6 +294,27 @@ This operational roll-up supplements the feature IDs above and adds no matrix fe
 | Live Node differential reference | BLOCKED | Missing dependencies, isolated legacy configuration, test script, and local MongoDB; Node server was not run. |
 
 Detailed evidence is in [`ORIGINAL_CLIENT_COMPATIBILITY_MATRIX.md`](migration/ORIGINAL_CLIENT_COMPATIBILITY_MATRIX.md), [`CLIENT_PROTOCOL_CAPTURES.md`](migration/CLIENT_PROTOCOL_CAPTURES.md), and [`CLIENT_COMPATIBILITY_READINESS.md`](migration/CLIENT_COMPATIBILITY_READINESS.md). No compatibility area is marked `VERIFIED`.
+
+## Prompt 23 performance verification overlay
+
+This operational roll-up adds no feature IDs and does not replace the per-feature acceptance criteria. `VERIFIED` applies only to the exact measured login/session slice, not to the full MMORPG server.
+
+| Performance area | Status | Evidence / limitation |
+|---|---|---|
+| Performance instrumentation | IN_PROGRESS | Existing low-cardinality network/auth/world/zone/player/Mongo metrics plus process-level harness measurements; queue-depth and per-handler timing remain absent. |
+| Benchmark/load harness | VERIFIED | Release harness uses real loopback sockets and source-compatible login greeting/request/reply; isolated in-memory accounts; JSON output; measured profiles are linked in the benchmark report. |
+| Networking performance | IN_PROGRESS | 1/10/50/100 login cohorts measured; duplicate receive/send loop starts fixed and ordered-frame test passes; results do not show consistent speedup. |
+| Protocol performance | NOT_STARTED | No isolated serialization/framing microbenchmark or stack profile. |
+| Session scalability | VERIFIED | 100 concurrent in-memory authenticated sessions held for five seconds in each of three repetitions; exact scope is documented. |
+| World and zone scalability | BLOCKED | No client-reachable world/player workflow or representative zone data. |
+| Spatial scalability | BLOCKED | No connected entity visibility/broadcast workload or representative map corpus. |
+| Gameplay performance | BLOCKED | Production gameplay packet handlers and representative operations are absent. |
+| Persistence performance | BLOCKED | MongoDB was unavailable and disabled; no live query/write measurements. |
+| Scripting performance | BLOCKED | Compatible runtime/API/event bridge is not implemented. |
+| Concurrency | IN_PROGRESS | Login socket/session concurrency was measured and ordered receive dispatch was fixed; world/player/database concurrency remains untested. |
+| Memory efficiency | IN_PROGRESS | Short process-level allocation/heap/working-set observations exist; no long soak or leak conclusion. |
+| Sustained-load stability | IN_PROGRESS | Authenticated idle sessions were held for five seconds; no long-duration gameplay soak. |
+| Overload behavior | NOT_STARTED | Queue saturation, slow-client policy, and overload response were not tested. |
 
 ## Coverage notes
 

@@ -345,4 +345,20 @@ Prompt 22 created the baseline, test inventory, parity coverage, comprehensive r
 
 The world-handshake request structure now has an 18-byte fixture derived from `packets/world/handshake.js`. The raw `0x15` success response, remaining world/login functionality, live MongoDB integration, differential Node execution and original-client verification remain unavailable or blocked. The feature matrix totals remain 137 `NOT_STARTED`, 7 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232).
 
-**Stop gate:** Prompt 22 is complete. Do not start Prompt 23, broad performance testing/optimization, or another migration stage until explicit approval.
+**Prompt 22 gate:** Prompt 22 is complete. Prompt 23 was subsequently approved and is recorded below.
+
+## Prompt 23 — Performance, scalability, and load testing
+
+Prompt 23 is in progress with its scope limited by implemented behavior. It establishes a Windows/.NET 10 baseline and a source-compatible real-socket login/authentication harness. The tested session ceiling is the configured 100 concurrent connections; it is not an active-player or production capacity claim.
+
+Evidence and reproducible commands:
+
+- [Performance baseline](PERFORMANCE_BASELINE.md)
+- [Performance test plan](PERFORMANCE_TEST_PLAN.md)
+- [Benchmark results](PERFORMANCE_BENCHMARK_RESULTS.md)
+- [Optimization decisions](PERFORMANCE_OPTIMIZATIONS.md)
+- [Scalability limits](SCALABILITY_LIMITS.md)
+
+The duplicate receive/send loop starts in `NetworkConnection.StartAsync` were corrected after an ordered-frame test failed before the change and passed afterward. Measurements did not establish a consistent performance improvement, and no unrelated speculative optimization was made. Full world/gameplay, live MongoDB, original-client, Node differential, long-soak, and overload workloads remain blocked or untested.
+
+**Stop gate:** Do not begin Prompt 24 security review or Prompt 25 release preparation without explicit approval. Do not mark the server-wide performance budget verified until representative implemented world/gameplay workloads and their measured evidence exist.
