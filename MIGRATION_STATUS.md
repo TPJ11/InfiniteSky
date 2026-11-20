@@ -4,7 +4,7 @@
 
 This file is the authoritative dashboard for the .NET 10 migration. Update it only from the feature matrix and linked test evidence.
 
-- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Full packet, entity simulation, database, and gameplay migration remains incomplete.
+- The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Prompt 16 has isolated XP and stat-allocation arithmetic slices in progress; full packet, data, entity simulation, database, and gameplay migration remains incomplete.
 - A feature may be `VERIFIED` only after its test/acceptance evidence exists and is linked.
 - `IMPLEMENTED` is not `VERIFIED`.
 - Blockers are documented below, in the matrix notes, and in `docs/migration/MIGRATION_RISKS.md`.
@@ -14,8 +14,8 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 227 |
-| NOT_STARTED | 161 |
-| IN_PROGRESS | 2 |
+| NOT_STARTED | 159 |
+| IN_PROGRESS | 4 |
 | IMPLEMENTED | 48 |
 | VERIFIED | 14 |
 | BLOCKED | 2 |
@@ -52,7 +52,8 @@ Prompt 15 records full character/world protocol integration and full original-cl
 - Account, character, equipment, inventory, skills, stats, guild, per-server bank, and runtime character state.
 - Item, skill, monster, NPC, and experience definitions from named original record fields.
 - Monster/NPC/world-item runtime entities and zone spawn/region descriptors.
-- 28 domain compatibility tests covering defaults, null/sparse arrays, identifiers, enum values, numerics, definitions, and identity.
+- 50 domain tests covering compatibility models, defaults, null/sparse arrays, identifiers, enum values, numerics, definitions, identity, XP progression, and stat allocation arithmetic.
+- `LegacyExperienceAwarder` and `LegacyStatPointAllocator` source-arithmetic calculations with synthetic threshold, point-band, missing-record, cap and allocation-key tests; not connected to runtime, packet handling, persistence, or original game data.
 
 Full persistence round-trip, world simulation, complete packet lifecycle, and gameplay algorithms remain `NOT_STARTED`, `IN_PROGRESS`, or `BLOCKED` as listed in the feature matrix.
 
@@ -144,12 +145,13 @@ The immediate critical path is:
 
 1. `PRO-001..004`, `PRO-015`, `PRO-017`, `PRO-032` — framing and unresolved wire structures.
 2. `DAT-001..008` — original game data and world data readers.
-3. `DOM-007..008` and persistence/protocol mappings for implemented models — progression, stats, and boundary conversion.
+3. `DOM-007..008` and persistence/protocol mappings for implemented models — progression, stats, and boundary conversion. `GP-004` only has isolated arithmetic; it needs the missing experience catalog and integration.
 4. `PER-003`, `PER-008`, `PER-009`, `PER-011..012` — full character/BSON round-trip and safe save behavior.
 5. `NET-008..009`, `PER-003..012` — session transfer, character/gameplay persistence, and full schema compatibility.
 6. `GP-001..003`, `INT-001` — end-to-end character/world entry.
-7. `WLD-001..010`, `ZON-004..005`, `ZON-007..008`, `ENT-001..002` — zone actors, portal/transfer behavior, entity bootstrap, safe-region policy, terrain, and world behavior beyond the implemented management/spatial boundary.
-8. `INT-006..009` — real data/client compatibility and performance evidence.
+7. `GP-005..038` — remaining gameplay; implement in dependency order only after source, game data and packet evidence are available.
+8. `WLD-001..010`, `ZON-004..005`, `ZON-007..008`, `ENT-001..002` — zone actors, portal/transfer behavior, entity bootstrap, safe-region policy, terrain, and world behavior beyond the implemented management/spatial boundary.
+9. `INT-006..009` — real data/client compatibility and performance evidence.
 
 ## Blocked research areas
 
@@ -161,18 +163,20 @@ The following matrix features are explicitly `BLOCKED` or remain research gaps:
 - natural monster AI/spawn and player respawn semantics (`GP-012`, `GP-023..024`);
 - quest protocol and data (`GP-025`);
 - generic NPC interaction packet/data (`GP-026`);
+- experience/item/skill/monster information images and original-data gameplay vectors (`DAT-002..005`);
+- complete gameplay packet request/response layouts and original-client transcripts (`GP-007..038`);
 - unsupported external plugins (`SCR-007`);
 - representative production BSON and client data (`INT-006`, `INT-008`, `PER-003`);
 - complete Character/world packet integration and full player/entity compatibility (`ENT-020..021`);
 - supported scope of FruitSalad process/editor tooling (`INF-014..015`, `INT-011..012`).
 
-## Recommended next action
+## Prompt 16 — gameplay
 
-Prompt 15's internal player/entity infrastructure is implemented, with full wire compatibility explicitly blocked. Before production use, verify inferred collections and indexes, run the opt-in isolated MongoDB suite, compare sanitized representative BSON, and validate real WREGION files and original-client recipient behavior. Full persistence, entity simulation, transfer, terrain, and gameplay parity remain incomplete. Do not begin Prompt 16 without explicit approval.
+Source audit and implementation status are documented in [GAMEPLAY_IMPLEMENTATION_PLAN.md](docs/migration/GAMEPLAY_IMPLEMENTATION_PLAN.md) and [GAMEPLAY_SYSTEMS_IMPLEMENTATION.md](docs/migration/GAMEPLAY_SYSTEMS_IMPLEMENTATION.md). `GP-004` and `GP-005` are `IN_PROGRESS`: pure XP and stat-allocation arithmetic are covered by synthetic tests but have no game-data catalog, handlers, derived-stat/vitals integration, packet output, or persistence. All other gameplay features remain unimplemented; source defects and unknowns are documented instead of copied as assumed rules. Validation: restore passed; full build passed with 0 warnings/errors; full suite 178 passed, 0 failed, 2 opt-in MongoDB tests skipped; format verification passed. Prompt 17 is not started.
 
 ## Dependency warnings
 
-- Do not begin gameplay services before domain, data, and packet fixtures.
+- Do not widen gameplay services beyond independently source-backed calculations until required domain, game data, packet, and persistence fixtures are available.
 - Do not expose a host as protocol-compatible before Stage 5.
 - Do not enable corrected gameplay defaults.
 - Do not port scripting/eval into production.

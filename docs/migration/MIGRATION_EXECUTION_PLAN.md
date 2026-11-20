@@ -244,6 +244,8 @@ Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplied the sta
 
 **Exit criteria:** deterministic transcripts cover PvP/PvM, level-up, skill, buff, and drops; double subtraction and profile differences are explicitly tested.
 
+**Prompt 16 status:** the source audit and per-feature implementation plan are recorded in [GAMEPLAY_IMPLEMENTATION_PLAN.md](GAMEPLAY_IMPLEMENTATION_PLAN.md). `GP-004` has an isolated C# XP/level/point calculation and `GP-005` has isolated stat-allocation arithmetic, both with synthetic unit tests only. The `005_00001.IMG` data, derived recalculation, vitals, packet and persistence boundaries are still missing. No combat, skill, item, movement, NPC/monster, quest, social, or economy behavior is claimed migrated. Restore and format verification passed, the solution build has zero warnings/errors, and the full test suite reports 178 passed/2 skipped. Keep remaining Stage 7-10 work in dependency order; do not begin Prompt 17.
+
 ## Stage 10 — Spawning, death, social systems, and events
 
 **Features:** `GP-023..032`, `GP-035..038`, `PRO-020..031`, `INT-005`.

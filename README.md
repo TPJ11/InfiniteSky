@@ -70,6 +70,8 @@ Only the 62 IDs in the original `config.json-dist` catalog are accepted. `data\s
 
 Player and entity infrastructure currently requires an authenticated login session, a character document owned by that account and configured server, a complete saved map/position, and a running configured zone. It is not reachable through the client protocol yet. See [ENTITY_LIFECYCLE.md](docs/migration/ENTITY_LIFECYCLE.md), [PLAYER_SESSION_AND_WORLD_ENTRY.md](docs/migration/PLAYER_SESSION_AND_WORLD_ENTRY.md), and [ENTITY_VISIBILITY_INTEGRATION.md](docs/migration/ENTITY_VISIBILITY_INTEGRATION.md) for lifecycle and compatibility limits.
 
+Gameplay migration remains incomplete and is not client-reachable. The Domain project now has unit-tested, source-derived XP/level/point and stat-allocation calculations; they are not connected to handlers, persistence, protocol messages, or derived-stat/vitals updates. Original game-data images such as `005_00001.IMG` are absent. Movement, combat, skills, items, NPCs/monsters, quests, social features, and economy are documented with their source limitations in [GAMEPLAY_IMPLEMENTATION_PLAN.md](docs/migration/GAMEPLAY_IMPLEMENTATION_PLAN.md) and [GAMEPLAY_SYSTEMS_IMPLEMENTATION.md](docs/migration/GAMEPLAY_SYSTEMS_IMPLEMENTATION.md).
+
 ### Configure MongoDB account persistence
 
 MongoDB is disabled unless explicitly enabled. For a local development database with no authentication:
