@@ -6,9 +6,9 @@ The root account model declares numeric `Level` with a default of 0. `GMCommand.
 
 The character model separately stores `IsGM`, and the character wire struct contains a 32-bit `isGM` field. The command dispatcher does not use either field. These fields are not evidence of equivalent authority and must not replace the account-level check.
 
-The root login model loads an account document containing `Level`, but the current .NET authentication projection intentionally only selects `_id`, `Username`, and `Password`. `AuthenticatedSession` therefore has no privilege value, and `PlayerRuntime` has no verified account authorization state. C# `Account.Level` exists as a domain property but is not populated by the authentication path.
+The root login model loads an account document containing `Level`. The .NET authentication repository now projects the field and retains it as `AuthenticatedSession.AccountLevel`, sourced only from the account document. Missing/null values map to the legacy schema default 0; malformed/non-finite values fail authentication as malformed account data. `Character.IsGM` and client packet fields are not used. `PlayerRuntime` does not duplicate the privilege value; an authorization consumer must resolve the authenticated session.
 
-Sources: [account.js](../../db/account.js#L12-L20), [character.js](../../db/character.js#L48-L63), [structs.js](../../generic/structs.js#L142-L149), [GMCommand.js](../../GMCommand.js#L48-L73), [commands.js](../../commands/commands.js#L8-L33), [MongoAccountAuthenticationRepository.cs](../../src/InfiniteSky.Persistence/MongoAccountAuthenticationRepository.cs#L32-L62), [AuthenticatedSession.cs](../../src/InfiniteSky.Application/Authentication/AuthenticatedSession.cs), [Account.cs](../../src/InfiniteSky.Domain/Accounts/Account.cs).
+Sources: [account.js](../../db/account.js#L12-L20), [character.js](../../db/character.js#L48-L63), [structs.js](../../generic/structs.js#L142-L149), [GMCommand.js](../../GMCommand.js#L48-L73), [commands.js](../../commands/commands.js#L8-L33), [MongoAccountAuthenticationRepository.cs](../../src/InfiniteSky.Persistence/MongoAccountAuthenticationRepository.cs#L32-L64), [LegacyAccountAuthenticationDocumentMapper.cs](../../src/InfiniteSky.Persistence/LegacyAccountAuthenticationDocumentMapper.cs), [AuthenticatedSession.cs](../../src/InfiniteSky.Application/Authentication/AuthenticatedSession.cs), [Account.cs](../../src/InfiniteSky.Domain/Accounts/Account.cs).
 
 ## Compatibility and security findings
 
@@ -22,12 +22,11 @@ Sources: [account.js](../../db/account.js#L12-L20), [character.js](../../db/char
 
 ## .NET status
 
-There is no .NET command authorization service or world chat command execution path. Prompt 18 did not infer a role system or map `IsGM` to account `Level`. Every game command remains `BLOCKED` in [ADMIN_COMMAND_COMPATIBILITY_MATRIX.md](./ADMIN_COMMAND_COMPATIBILITY_MATRIX.md).
+The authenticated account level is now available from the server-created session, but there is still no .NET command authorization service or world chat command execution path. Prompt 18 did not infer a role system or map `IsGM` to account `Level`. Every game command remains `BLOCKED` in [ADMIN_COMMAND_COMPATIBILITY_MATRIX.md](./ADMIN_COMMAND_COMPATIBILITY_MATRIX.md).
 
 Before any handler is enabled, the server needs:
 
-1. A source-compatible, server-derived account-level value in the authenticated session boundary, loaded from the account document with BSON compatibility tests.
-2. World connection activation that proves the login session owns the active character/connection.
-3. Authorization on every dispatch before command-specific lookup or mutation.
-4. Tests for unauthenticated, stale-session, missing-level, boundary-level, and forged-client-field cases.
-5. A separately documented policy for source commands that expose high-impact mutations at low levels. Do not silently change the legacy threshold; gate any security correction and list the compatibility difference.
+1. World connection activation that proves the login session owns the active character/connection.
+2. Authorization on every dispatch before command-specific lookup or mutation.
+3. Tests for unauthenticated, stale-session, missing-level, boundary-level, and forged-client-field cases.
+4. A separately documented policy for source commands that expose high-impact mutations at low levels. Do not silently change the legacy threshold; gate any security correction and list the compatibility difference.

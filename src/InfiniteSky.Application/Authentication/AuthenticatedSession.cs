@@ -9,5 +9,6 @@ public sealed record AuthenticatedSession(
     Guid SessionId,
     AccountId AccountId,
     string Username,
+    double AccountLevel,
     Guid ConnectionId,
     DateTimeOffset CreatedAt);

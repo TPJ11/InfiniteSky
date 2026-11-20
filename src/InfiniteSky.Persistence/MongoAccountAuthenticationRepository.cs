@@ -46,7 +46,8 @@ public sealed partial class MongoAccountAuthenticationRepository
                     Builders<BsonDocument>.Projection
                         .Include("_id")
                         .Include("Username")
-                        .Include("Password");
+                        .Include("Password")
+                        .Include("Level");
                 var options = new FindOptions<BsonDocument, BsonDocument>
                 {
                     Collation = new Collation("simple"),

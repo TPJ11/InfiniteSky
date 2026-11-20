@@ -20,6 +20,7 @@ public sealed class LegacyAccountAuthenticationDocumentMapperTests
 
         Assert.Equal(17, account.AccountId.Value);
         Assert.Equal("LegacyFixture", account.Username);
+        Assert.Equal(0, account.AccountLevel);
         Assert.Equal(
             Encoding.UTF8.GetBytes("fixture-only-password"),
             account.LegacyPasswordUtf8);
@@ -54,6 +55,90 @@ public sealed class LegacyAccountAuthenticationDocumentMapperTests
         Assert.Null(nullAccount.LegacyPasswordUtf8);
         Assert.Equal(18, missingAccount.AccountId.Value);
         Assert.Equal(19, nullAccount.AccountId.Value);
+    }
+
+    [Fact]
+    public void MapsLegacyAccountLevelAcrossNumericBsonTypesAndDefaultsMissingOrNullToZero()
+    {
+        var int32Level = new BsonDocument
+        {
+            { "_id", 20 },
+            { "Username", "Int32Level" },
+            { "Level", new BsonInt32(12) },
+        };
+        var int64Level = new BsonDocument
+        {
+            { "_id", 21 },
+            { "Username", "Int64Level" },
+            { "Level", new BsonInt64(80) },
+        };
+        var doubleLevel = new BsonDocument
+        {
+            { "_id", 22 },
+            { "Username", "DoubleLevel" },
+            { "Level", new BsonDouble(80.5) },
+        };
+        var missingLevel = new BsonDocument
+        {
+            { "_id", 23 },
+            { "Username", "MissingLevel" },
+        };
+        var nullLevel = new BsonDocument
+        {
+            { "_id", 24 },
+            { "Username", "NullLevel" },
+            { "Level", BsonNull.Value },
+        };
+
+        Assert.Equal(12, LegacyAccountAuthenticationDocumentMapper.Map(int32Level).AccountLevel);
+        Assert.Equal(80, LegacyAccountAuthenticationDocumentMapper.Map(int64Level).AccountLevel);
+        Assert.Equal(80.5, LegacyAccountAuthenticationDocumentMapper.Map(doubleLevel).AccountLevel);
+        Assert.Equal(0, LegacyAccountAuthenticationDocumentMapper.Map(missingLevel).AccountLevel);
+        Assert.Equal(0, LegacyAccountAuthenticationDocumentMapper.Map(nullLevel).AccountLevel);
+    }
+
+    [Theory]
+    [InlineData(BsonType.String)]
+    [InlineData(BsonType.Boolean)]
+    public void RejectsNonNumericAccountLevel(BsonType levelType)
+    {
+        var document = new BsonDocument
+        {
+            { "_id", 25 },
+            { "Username", "MalformedLevel" },
+            {
+                "Level",
+                levelType == BsonType.String
+                    ? BsonString.Create("80")
+                    : BsonBoolean.Create(true)
+            },
+        };
+
+        MongoPersistenceException exception =
+            Assert.Throws<MongoPersistenceException>(
+                () => LegacyAccountAuthenticationDocumentMapper.Map(document));
+
+        Assert.Equal(MongoPersistenceFailureKind.MalformedDocument, exception.FailureKind);
+    }
+
+    [Theory]
+    [InlineData(double.NaN)]
+    [InlineData(double.PositiveInfinity)]
+    [InlineData(double.NegativeInfinity)]
+    public void RejectsNonFiniteAccountLevel(double level)
+    {
+        var document = new BsonDocument
+        {
+            { "_id", 26 },
+            { "Username", "MalformedLevel" },
+            { "Level", new BsonDouble(level) },
+        };
+
+        MongoPersistenceException exception =
+            Assert.Throws<MongoPersistenceException>(
+                () => LegacyAccountAuthenticationDocumentMapper.Map(document));
+
+        Assert.Equal(MongoPersistenceFailureKind.MalformedDocument, exception.FailureKind);
     }
 
     [Theory]

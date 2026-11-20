@@ -28,6 +28,7 @@ public sealed class PlayerActivationServiceTests
             sessions.TryCreate(
                 new AccountId(17),
                 "FixtureAccount",
+                accountLevel: 0,
                 loginConnectionId,
                 DateTimeOffset.UtcNow,
                 out AuthenticatedSession? session));
@@ -99,6 +100,7 @@ public sealed class PlayerActivationServiceTests
         _ = sessions.TryCreate(
             new AccountId(17),
             "FixtureAccount",
+            accountLevel: 0,
             loginConnectionId,
             DateTimeOffset.UtcNow,
             out _);

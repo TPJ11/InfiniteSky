@@ -1,14 +1,8 @@
-NOTE: This readme is not too helpful in setting up the server anymore.
-Someone needs to update it.
-
-[Documentation](https://rawgit.com/LiamKarlMitchell/InfiniteSky/InfiniteSky_FruitSalad/FruitSalad/Documentation/index.html)
-
-InfiniteSky
-=========
+# InfiniteSky
 
 ## .NET 10 foundation
 
-The repository now includes the approved .NET 10 solution foundation alongside the unchanged Node.js implementation.
+This repository contains the original Node.js server and its staged .NET 10 migration. The Node.js code remains the behavioral reference; the .NET server is not yet a playable or production-compatible replacement. The older [FruitSalad documentation](https://rawgit.com/LiamKarlMitchell/InfiniteSky/InfiniteSky_FruitSalad/FruitSalad/Documentation/index.html) describes legacy/alternate-runtime material.
 
 The current C# host provides:
 
@@ -16,12 +10,12 @@ The current C# host provides:
 - a Generic Host composition root;
 - validated, strongly typed configuration;
 - structured startup/shutdown logging and foundation readiness;
-- login authentication and an opt-in MongoDB account repository;
+- login authentication, an opt-in MongoDB account repository, and the server-loaded account `Level` in the authenticated session;
 - a single-world lifecycle, readiness boundary, and optional MongoDB guild bootstrap;
 - test projects and developer build/test/format scripts;
 - GitHub Actions build, test, and formatting verification.
 
-The host now loads explicitly selected legacy zone definitions, parses optional NPC/WREGION files, maintains zone lifecycle/readiness, and provides a source-compatible X/Z spatial candidate index. It also has an account-owned character repository and an internal player activation/cleanup boundary that registers players in a running zone and saves supported location fields on disconnect/shutdown. These services are not wired to character/world packets: the host does not yet support client character selection, world entry, spawn/despawn replication, movement packets, NPC/monster runtime spawning, zone transfers, terrain, or gameplay. With the default empty zone list, world health remains degraded rather than creating a placeholder zone. Complete game protocol and gameplay migration remain governed by the feature parity matrix and migration plan.
+The host now loads explicitly selected legacy zone definitions, parses optional NPC/WREGION files, maintains zone lifecycle/readiness, and provides a source-compatible X/Z spatial candidate index. It also has an account-owned character repository and an internal player activation/cleanup boundary that registers players in a running zone and saves supported location fields on disconnect/shutdown. These services are not wired to character/world packets: the host does not yet support client character selection, world entry, spawn/despawn replication, movement packets, NPC/monster runtime spawning, zone transfers, terrain, or gameplay. The account-level session field does not enable GM commands; world chat dispatch and command services remain absent. With the default empty zone list, world health remains degraded rather than creating a placeholder zone. See the [feature parity matrix](docs/FEATURE_PARITY_MATRIX.md), [remaining feature gaps](docs/migration/REMAINING_FEATURE_GAPS.md), [completeness report](docs/migration/FEATURE_COMPLETENESS_REPORT.md), and [integration readiness assessment](docs/migration/INTEGRATION_READINESS.md).
 
 Prerequisites: .NET SDK 10.0.401 or a later compatible 10.0.x feature band.
 
@@ -94,7 +88,9 @@ The legacy Node.js code and its installation instructions remain below for refer
 
 [![Join the chat at https://gitter.im/LiamKarlMitchell/InfiniteSky](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/LiamKarlMitchell/InfiniteSky?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-InfiniteSky is an open-source project, based on public functionality of Twelve Sky. It is written in Node.JS
+## Original Node.js project (historical reference)
+
+InfiniteSky is an open-source project, based on public functionality of Twelve Sky. It is written in Node.JS.
 
   - We have reloadable code. This means less need to reset the server when developing.
   - Currently the world server part is being re-intergrated into the code base.

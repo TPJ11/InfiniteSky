@@ -16,9 +16,9 @@ The status table in the source also names suspended, payment, version, maintenan
 
 ## Account data required
 
-The original account schema defines numeric `_id`, unique `Username`, plaintext `Password`, numeric `active` and `Level`, and additional email, PIN, last-IP, last-login, character-individual, and AP fields ([`account.js`](../../db/account.js#L12)). The C# authentication record retains only the account identifier, username, and transient password bytes; missing or null legacy `Password` is treated as an incorrect credential. The MongoDB repository projects only those fields and exposes the `active` update needed by the observed login path.
+The original account schema defines numeric `_id`, unique `Username`, plaintext `Password`, numeric `active` and `Level`, and additional email, PIN, last-IP, last-login, character-individual, and AP fields ([`account.js`](../../db/account.js#L12)). The C# authentication record retains the account identifier, username, server-loaded numeric account `Level`, and transient password bytes; missing or null legacy `Password` is treated as an incorrect credential. The MongoDB repository projects those fields plus the `active` update needed by the observed login path. Missing or null `Level` maps to the schema default of 0; malformed or non-finite numeric values fail closed as malformed account data.
 
-The packet handler does not apply the commented ban checks; the PIN fields are not used in the active login packet flow. The `Level > 80` stale-active exception is observed but not reproduced in this stage because the minimal account repository contract does not yet expose level. This, and the lack of the original live-world-socket check, is a documented compatibility gap.
+The packet handler does not apply the commented ban checks; the PIN fields are not used in the active login packet flow. The account level is retained in the authenticated session for server-side authorization consumers, but does not implement the source's `Level > 80` stale-active exception or the original live-world-socket lookup. Those login-policy differences remain documented compatibility gaps.
 
 ## Credential rule and security
 
@@ -52,7 +52,7 @@ The source contains other reply status constants, but this implementation does n
 
 ## Session lifecycle
 
-The session store uses a generated `Guid` session ID and indexes each session by account and connection. A session contains account ID, username, connection ID, and creation time; it never contains credentials. There is no session TTL because no authenticated login-session expiration rule was found in the original handler. The configured timeout limits only an authentication operation, not an established session.
+The session store uses a generated `Guid` session ID and indexes each session by account and connection. A session contains account ID, username, the account `Level` loaded by the server, connection ID, and creation time; it never contains credentials. The account level is not client-supplied and is not copied from character `IsGM`. There is no session TTL because no authenticated login-session expiration rule was found in the original handler. The configured timeout limits only an authentication operation, not an established session.
 
 Connection closure removes the in-memory session. It does not clear the persistent account `active` flag on ordinary login disconnect, matching the login server's `logoutUser` behavior: that helper resets the flag only during zone transfer ([`account.js`](../../db/account.js#L30)). The world server has a separate logout path that resets the flag when not transferring zones ([`world.js`](../../world.js#L470)). There is no explicit login logout opcode identified for this stage; disconnect is the available cleanup signal.
 
@@ -64,7 +64,7 @@ Structured authentication events cover request receipt and outcome. Metrics cove
 
 ## Verification
 
-Automated coverage includes exact response fixtures, credential match/mismatch and Latin-1 text, invalid fields, unknown accounts, repository/session-store errors, cancellation and timeout rollback, concurrent same-account login, repeated requests on one connection, response delivery before duplicate-login close, and session cleanup on disconnect. Persistence tests add synthetic BSON mapping, missing/null credentials, malformed data, error classification, configuration, and redaction checks. The isolated MongoDB Testcontainers test is skipped unless explicitly enabled and Docker is available.
+Automated coverage includes exact response fixtures, credential match/mismatch and Latin-1 text, invalid fields, unknown accounts, repository/session-store errors, cancellation and timeout rollback, concurrent same-account login, repeated requests on one connection, response delivery before duplicate-login close, and session cleanup on disconnect. Persistence tests add synthetic BSON mapping for numeric, missing, null, malformed, and non-finite account levels, credentials, error classification, configuration, and redaction checks. The isolated MongoDB Testcontainers test is skipped unless explicitly enabled and Docker is available.
 
 The in-process flow and wire responses are verified. The production account repository is implemented but not verified against a live server or representative legacy account data; container integration was unavailable in this environment. Character listing and full client login progression are not verified.
 

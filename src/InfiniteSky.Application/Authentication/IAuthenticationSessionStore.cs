@@ -12,6 +12,7 @@ public interface IAuthenticationSessionStore
     SessionRegistrationStatus TryCreate(
         AccountId accountId,
         string username,
+        double accountLevel,
         Guid connectionId,
         DateTimeOffset createdAt,
         out AuthenticatedSession? session);

@@ -29,6 +29,11 @@ public static class LegacyAccountAuthenticationDocumentMapper
             throw new MongoPersistenceException(MongoPersistenceFailureKind.MalformedDocument);
         }
 
+        double accountLevel = document.TryGetValue("Level", out BsonValue? levelValue)
+            && !levelValue.IsBsonNull
+                ? ReadAccountLevel(levelValue)
+                : 0;
+
         byte[]? password = null;
         if (document.TryGetValue("Password", out BsonValue? passwordValue)
             && !passwordValue.IsBsonNull)
@@ -44,7 +49,25 @@ public static class LegacyAccountAuthenticationDocumentMapper
         return new AccountAuthenticationRecord(
             new AccountId(id),
             usernameValue.AsString,
+            accountLevel,
             password);
+    }
+
+    private static double ReadAccountLevel(BsonValue value)
+    {
+        double level = value.BsonType switch
+        {
+            BsonType.Int32 => value.AsInt32,
+            BsonType.Int64 => value.AsInt64,
+            BsonType.Double => value.AsDouble,
+            _ => throw new MongoPersistenceException(MongoPersistenceFailureKind.MalformedDocument),
+        };
+        if (!double.IsFinite(level))
+        {
+            throw new MongoPersistenceException(MongoPersistenceFailureKind.MalformedDocument);
+        }
+
+        return level;
     }
 
     private static long ReadNumericId(BsonValue value)

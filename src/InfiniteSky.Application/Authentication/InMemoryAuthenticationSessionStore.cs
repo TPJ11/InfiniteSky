@@ -31,11 +31,16 @@ public sealed class InMemoryAuthenticationSessionStore : IAuthenticationSessionS
     public SessionRegistrationStatus TryCreate(
         AccountId accountId,
         string username,
+        double accountLevel,
         Guid connectionId,
         DateTimeOffset createdAt,
         out AuthenticatedSession? session)
     {
         ArgumentNullException.ThrowIfNull(username);
+        if (!double.IsFinite(accountLevel))
+        {
+            throw new ArgumentOutOfRangeException(nameof(accountLevel));
+        }
         session = null;
 
         if (connectionId == Guid.Empty)
@@ -59,6 +64,7 @@ public sealed class InMemoryAuthenticationSessionStore : IAuthenticationSessionS
                 Guid.NewGuid(),
                 accountId,
                 username,
+                accountLevel,
                 connectionId,
                 createdAt);
             _byAccount.Add(accountId, session);

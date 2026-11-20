@@ -5,8 +5,10 @@ points, numeric account-level checks, root console REPL, and the separate
 FruitSalad command tree. No C# command parser, dispatcher, authorization service,
 moderation handler, audit sink, operator CLI, or migrated command was added.
 Administration remains blocked because the .NET world listener does not dispatch
-chat packets, authenticated sessions omit account `Level`, and command effects
-depend on incomplete world/gameplay/persistence services.
+chat packets and command effects depend on incomplete world/gameplay/persistence
+services. Prompt 19 carried the database-derived account `Level` into
+`AuthenticatedSession`; this supplies a future authorization input but does not
+add command execution, character ownership checks, or response handling.
 
 ## Prompt 18 documents
 
@@ -20,10 +22,11 @@ depend on incomplete world/gameplay/persistence services.
 
 ## Migration status
 
-`ADM-001..013` and `GP-032` are `BLOCKED`; no command is `IMPLEMENTED` or
+`ADM-001..013` and `GP-032` remain `BLOCKED`; no command is `IMPLEMENTED` or
 `VERIFIED`. The compatibility matrix records source stubs and absent behavior
 separately. No new permission levels, moderation rules, persistent schemas, or
-command handlers were invented. Prompt 19 has not been started.
+command handlers were invented in Prompt 18 or Prompt 19.
 
-No command tests are claimed. Prompt 18 full-solution validation and the
-documentation checks are recorded in [MIGRATION_STATUS.md](../../MIGRATION_STATUS.md).
+No command tests are claimed. The account-level BSON/session tests do not verify
+command authorization or effects. Prompt 19 validation is recorded in
+[MIGRATION_STATUS.md](../../MIGRATION_STATUS.md).

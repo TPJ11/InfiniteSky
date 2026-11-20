@@ -22,7 +22,7 @@ public sealed class AuthenticationTests
     public async Task ValidCredentialsCreateOneSessionAndZeroStoredCredentialBuffer()
     {
         using var metrics = new AuthenticationMetrics();
-        var repository = new TestAccountRepository();
+        var repository = new TestAccountRepository { AccountLevel = 81 };
         var sessions = new InMemoryAuthenticationSessionStore(metrics);
         using var service = new AuthenticationService(
             repository,
@@ -43,6 +43,7 @@ public sealed class AuthenticationTests
         Assert.NotNull(result.Session);
         Assert.Equal(connectionId, result.Session.ConnectionId);
         Assert.Equal(new AccountId(17), result.Session.AccountId);
+        Assert.Equal(81, result.Session.AccountLevel);
         Assert.NotEqual(Guid.Empty, result.Session.SessionId);
         Assert.Equal(AuthenticationConnectionState.Authenticated, service.GetConnectionState(connectionId));
         Assert.True(sessions.TryGetByAccount(new AccountId(17), out AuthenticatedSession? found));
@@ -58,6 +59,7 @@ public sealed class AuthenticationTests
         public SessionRegistrationStatus TryCreate(
             AccountId accountId,
             string username,
+            double accountLevel,
             Guid connectionId,
             DateTimeOffset createdAt,
             out AuthenticatedSession? session)
@@ -592,6 +594,7 @@ public sealed class AuthenticationTests
         public bool FailActiveUpdate { get; set; }
         public string AccountUsername { get; init; } = "PlayerName";
         public string? AccountPassword { get; init; } = "Secret123";
+        public double AccountLevel { get; init; }
         public int LookupCount => Volatile.Read(ref _lookupCount);
         public int Active => Volatile.Read(ref _active);
         public byte[]? LastReturnedCredential { get; private set; }
@@ -630,6 +633,7 @@ public sealed class AuthenticationTests
             return new AccountAuthenticationRecord(
                 new AccountId(17),
                 AccountUsername,
+                AccountLevel,
                 LastReturnedCredential);
         }
 

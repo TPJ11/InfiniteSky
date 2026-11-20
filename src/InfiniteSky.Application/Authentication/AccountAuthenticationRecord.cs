@@ -11,17 +11,28 @@ public sealed class AccountAuthenticationRecord
     public AccountAuthenticationRecord(
         AccountId accountId,
         string username,
+        double accountLevel,
         byte[]? legacyPasswordUtf8)
     {
         ArgumentNullException.ThrowIfNull(username);
+        if (!double.IsFinite(accountLevel))
+        {
+            throw new ArgumentOutOfRangeException(nameof(accountLevel));
+        }
 
         AccountId = accountId;
         Username = username;
+        AccountLevel = accountLevel;
         LegacyPasswordUtf8 = legacyPasswordUtf8;
     }
 
     public AccountId AccountId { get; }
     public string Username { get; }
+
+    /// <summary>
+    /// Gets the server-loaded legacy account privilege value. This is never client supplied.
+    /// </summary>
+    public double AccountLevel { get; }
 
     /// <summary>
     /// Gets the transient legacy plaintext credential in UTF-8 form, or null when the

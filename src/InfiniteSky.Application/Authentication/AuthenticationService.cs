@@ -134,6 +134,7 @@ public sealed class AuthenticationService : IAuthenticationService, IDisposable
                 SessionRegistrationStatus registration = _sessions.TryCreate(
                     account.AccountId,
                     account.Username,
+                    account.AccountLevel,
                     connectionId,
                     _timeProvider.GetUtcNow(),
                     out AuthenticatedSession? session);
