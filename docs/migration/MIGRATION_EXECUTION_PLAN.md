@@ -283,6 +283,8 @@ Prompt 13 supplied only the world lifecycle boundary. Prompt 14 supplied the sta
 
 **Prompt 17 outcome:** the root audit found shared-process VMScript execution, live global service dependencies, active packet/command module loaders, and filename-based built-in plugin startup; it did not find a conventional plugin API or a tracked root external plugin set. `InfiniteSky.Scripting` has no runtime implementation or JavaScript dependency. Native C# migration is selected for server-owned behavior, but the current source/API dependencies block a compatible scripting runtime. No generic extension host or embedded JavaScript engine was added. See the Prompt 17 documents and `MIGRATION_STATUS.md`; `SCR-001..013` remain individually tracked and no script is claimed migrated.
 
+**Prompt 18 outcome:** the source-backed root chat/CLI and FruitSalad command inventories are documented in `ADMIN_COMMAND_COMPATIBILITY_MATRIX.md`. No C# command infrastructure or handlers were added because world chat opcodes are not dispatched, authenticated sessions omit the source account `Level`, and command effects require missing gameplay/persistence boundaries. `ADM-001..013` and `GP-032` are `BLOCKED`, not implemented or verified. The command inventory distinguishes active behavior, test utilities, partial handlers, stubs, disabled entries, and absent moderation features. See the Prompt 18 administration documents and `MIGRATION_STATUS.md`; original Node.js source remains unchanged.
+
 ## Stage 12 — Compatibility soak, performance, and release candidate
 
 **Features:** `INT-006`, `INT-008..010`, all P0/P1 residuals.

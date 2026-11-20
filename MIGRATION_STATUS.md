@@ -14,11 +14,11 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 232 |
-| NOT_STARTED | 155 |
+| NOT_STARTED | 141 |
 | IN_PROGRESS | 4 |
 | IMPLEMENTED | 48 |
 | VERIFIED | 14 |
-| BLOCKED | 10 |
+| BLOCKED | 24 |
 | NOT_APPLICABLE | 1 |
 | Overall verified progress | 6.0% |
 
@@ -41,9 +41,9 @@ Prompt 15 records full character/world protocol integration and full original-cl
 | Entities/players | 21 | 11 | 0 | 2 | 52.4% |
 | Gameplay | 38 | 0 | 0 | 0 | 0% |
 | Scripting/plugins | 13 | 0 | 0 | 10 | 0% |
-| Administration | 13 | 0 | 0 | 0 | 0% |
+| Administration | 13 | 0 | 0 | 13 | 0% |
 | Integration/compatibility | 16 | 0 | 0 | 0 | 0% |
-| **Total** | **232** | **48** | **14** | **10** | **26.7%** |
+| **Total** | **232** | **48** | **14** | **24** | **26.7%** |
 
 ## Completed domain model work
 
@@ -152,6 +152,7 @@ The immediate critical path is:
 7. `GP-005..038` — remaining gameplay; implement in dependency order only after source, game data and packet evidence are available.
 8. `WLD-001..010`, `ZON-004..005`, `ZON-007..008`, `ENT-001..002` — zone actors, portal/transfer behavior, entity bootstrap, safe-region policy, terrain, and world behavior beyond the implemented management/spatial boundary.
 9. `INT-006..009` — real data/client compatibility and performance evidence.
+10. `ADM-001..013` and `GP-032` — command dispatch, authoritative account privilege, world chat networking, and required administration/gameplay services.
 
 ## Blocked research areas
 
@@ -176,9 +177,17 @@ Source audit and implementation status are documented in [GAMEPLAY_IMPLEMENTATIO
 
 ## Prompt 17 — scripting and plugins
 
-The root Node.js VMScript, loaders, module dependency declarations, packet/command script directories, root lifecycle events, zone hook slots, configured plugin filenames, and alternate FruitSalad process/zone-script runtime are inventoried in [SCRIPTING_COMPATIBILITY_MATRIX.md](docs/migration/SCRIPTING_COMPATIBILITY_MATRIX.md). The selected migration strategy is native C# migration of individually source-verified server behavior; no embedded JavaScript runtime or generic plugin API was added because the root scripts execute against shared Node globals and unfinished live service APIs. No script or plugin is `IMPLEMENTED` or `VERIFIED`. `SCR-001..002`, `SCR-004..005`, `SCR-008`, and `SCR-011..013` are `BLOCKED`; `SCR-003`, `SCR-006`, `SCR-009..010` are `NOT_STARTED`; README-only external plugin references (`SCR-007`) are `NOT_APPLICABLE`. Prompt 18 commands remain out of scope.
+The root Node.js VMScript, loaders, module dependency declarations, packet/command script directories, root lifecycle events, zone hook slots, configured plugin filenames, and alternate FruitSalad process/zone-script runtime are inventoried in [SCRIPTING_COMPATIBILITY_MATRIX.md](docs/migration/SCRIPTING_COMPATIBILITY_MATRIX.md). The selected migration strategy is native C# migration of individually source-verified server behavior; no embedded JavaScript runtime or generic plugin API was added because the root scripts execute against shared Node globals and unfinished live service APIs. No script or plugin is `IMPLEMENTED` or `VERIFIED`. `SCR-001..002`, `SCR-004..005`, `SCR-008`, and `SCR-011..013` are `BLOCKED`; `SCR-003`, `SCR-006`, `SCR-009..010` are `NOT_STARTED`; README-only external plugin references (`SCR-007`) are `NOT_APPLICABLE`. Prompt 18 separately documents the legacy commands but does not add a C# command runtime.
 
 Decision, lifecycle, event, gameplay and security details are documented in [SCRIPTING_ENGINE_DECISION.md](docs/migration/SCRIPTING_ENGINE_DECISION.md), [SCRIPTING_IMPLEMENTATION.md](docs/migration/SCRIPTING_IMPLEMENTATION.md), [PLUGIN_LIFECYCLE.md](docs/migration/PLUGIN_LIFECYCLE.md), [SCRIPT_EVENT_SYSTEM.md](docs/migration/SCRIPT_EVENT_SYSTEM.md), [SCRIPTING_GAMEPLAY_INTEGRATION.md](docs/migration/SCRIPTING_GAMEPLAY_INTEGRATION.md), and [SCRIPTING_SECURITY_MODEL.md](docs/migration/SCRIPTING_SECURITY_MODEL.md). No original JavaScript files changed. No scripting tests or runtime integration tests are claimed because no execution behavior was implemented. Validation: restore passed; build passed with 0 warnings/errors; full suite 178 passed, 0 failed, 2 opt-in MongoDB tests skipped; format verification and `git diff --check` passed.
+
+## Prompt 18 — commands and administration
+
+The root Node command registry and dispatch behavior, command modules and aliases, numeric account-level checks, root console REPL, moderation stubs, and separate FruitSalad command tree are inventoried in [ADMIN_COMMAND_COMPATIBILITY_MATRIX.md](docs/migration/ADMIN_COMMAND_COMPATIBILITY_MATRIX.md). Supporting documents describe the command boundary, authorization, GM commands, moderation, server administration, and audit/security findings. No command framework, handler, privilege field, audit store, or operator CLI was added.
+
+The source audit found that .NET world listeners do not dispatch the legacy normal/faction/whisper chat opcodes, the authentication projection omits account `Level` required by `GMCommand.Execute`, and the session/player boundaries cannot safely authorize or respond to command invocations. Command effects also depend on incomplete world, gameplay, packet, and persistence services. Therefore `ADM-001..013` and `GP-032` are `BLOCKED`; none is `IMPLEMENTED` or `VERIFIED`. The compatibility matrix distinguishes active behavior from stubs, broken/partial handlers, and absent features. No original Node.js source files changed and no command tests are claimed.
+
+Prompt 18 validation: `dotnet restore InfiniteSky.sln` succeeded (dependencies were already current); the full solution build passed with 0 warnings/errors; all 178 runnable tests passed and the 2 opt-in MongoDB integration tests were skipped; `dotnet format InfiniteSky.sln --verify-no-changes --no-restore` and `git diff --check` passed. A documentation link check found all 236 local Markdown links target existing files. These checks establish existing solution health, not command parity; no command-specific tests ran because no command execution code was added. No original Node.js source files changed.
 
 ## Dependency warnings
 

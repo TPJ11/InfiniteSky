@@ -220,17 +220,18 @@ Main Documentation in docs/index.html
 [Restruct Documentation](https://github.com/LiamKarlMitchell/InfiniteSky/blob/master/docs/gitsetup.md)
 [Scripting Documentation](https://github.com/LiamKarlMitchell/InfiniteSky/blob/master/docs/scripting.md)
 
-## Create account
-You will want to create some game accounts too use.
-To make a GM account use
-````
-/createaccount Name Password 100
-````
+## Operator and GM commands
 
-The 100 us the level.
+The current .NET 10 host does not yet expose in-game GM commands, account creation,
+or an operator command console. Legacy Node.js command examples are not supported
+by the .NET server and must not be used as evidence of migration parity.
 
-Try also /help for other commands.
-If you want information on game info try infos.Item[1].Name or other attributes.
+The original command names, account-level thresholds, argument syntax, implemented
+effects, stubs, and migration blockers are documented in
+[the administration compatibility matrix](docs/migration/ADMIN_COMMAND_COMPATIBILITY_MATRIX.md).
+See the [authorization](docs/migration/ADMIN_AUTHORIZATION.md) and
+[server administration](docs/migration/SERVER_ADMINISTRATION.md) notes for current
+boundaries and limitations.
 
 ## Notes
 

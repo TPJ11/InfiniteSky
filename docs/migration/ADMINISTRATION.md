@@ -1,54 +1,29 @@
-# Administration Migration
+# Administration Migration Status
 
-## Scope and matrix coverage
+Prompt 18 audited the original root game-chat command registry, its packet entry
+points, numeric account-level checks, root console REPL, and the separate
+FruitSalad command tree. No C# command parser, dispatcher, authorization service,
+moderation handler, audit sink, operator CLI, or migrated command was added.
+Administration remains blocked because the .NET world listener does not dispatch
+chat packets, authenticated sessions omit account `Level`, and command effects
+depend on incomplete world/gameplay/persistence services.
 
-`ADM-001` through `ADM-013`: command registry, authorization, information/debug commands, movement, spawning, character/inventory mutation, moderation, CLI, and diagnostics.
+## Prompt 18 documents
 
-## Source files
+- [ADMIN_COMMAND_COMPATIBILITY_MATRIX.md](./ADMIN_COMMAND_COMPATIBILITY_MATRIX.md) — per-command names, aliases, levels, syntax, legacy behavior, status, and blockers.
+- [COMMAND_SYSTEM_IMPLEMENTATION.md](./COMMAND_SYSTEM_IMPLEMENTATION.md) — original dispatch model and .NET dependency gate.
+- [ADMIN_AUTHORIZATION.md](./ADMIN_AUTHORIZATION.md) — account `Level`, character `IsGM`, and session authorization findings.
+- [GM_COMMANDS.md](./GM_COMMANDS.md) — game-chat command compatibility summary.
+- [MODERATION_IMPLEMENTATION.md](./MODERATION_IMPLEMENTATION.md) — kick, ban, mute, unlock, shutdown, and report findings.
+- [SERVER_ADMINISTRATION.md](./SERVER_ADMINISTRATION.md) — legacy local REPL and .NET operator support.
+- [ADMIN_AUDIT_AND_SECURITY.md](./ADMIN_AUDIT_AND_SECURITY.md) — original risks, deliberate restrictions, and future safeguards.
 
-`GMCommand.js`, every `commands/*.js`, `cli.js`, every `cli/*.js`, `commands/game_gmcommands.js`, FruitSalad commands as migration evidence.
+## Migration status
 
-## Target components
+`ADM-001..013` and `GP-032` are `BLOCKED`; no command is `IMPLEMENTED` or
+`VERIFIED`. The compatibility matrix records source stubs and absent behavior
+separately. No new permission levels, moderation rules, persistent schemas, or
+command handlers were invented. Prompt 19 has not been started.
 
-`InfiniteSky.Application/AdminCommandDispatcher`, typed command classes, `InfiniteSky.World` admin state commands, and restricted server diagnostic CLI.
-
-## Dependencies
-
-Depends on feature services in the command: world registry, player state, data catalog, inventory, persistence, zones, scripting. Authorization precedes all command porting.
-
-## Implementation order
-
-1. Registry, authorization, aliases, auditing.
-2. Help/information commands.
-3. save/state and operator-safe diagnostics.
-4. character progression/combat commands.
-5. movement and target commands.
-6. spawn/remove commands.
-7. inventory/economy commands.
-8. moderation/shutdown.
-9. account/mail/import.
-10. restricted REPL/CLI.
-
-## Tests
-
-- account level denial and exact allow threshold;
-- aliases and invalid command;
-- argument parsing;
-- every state mutation;
-- target by name/ID/zone;
-- persistence acknowledgement;
-- audit correlation;
-- error/redaction;
-- no arbitrary OS/JS execution by default.
-
-## Acceptance criteria
-
-- Every tracked active command is either a C# command, scripted through the capability boundary, or an approved `NOT_APPLICABLE` record.
-- Account level is checked before any lookup/mutation.
-- Destructive operations are audited.
-- Operator command completion reports asynchronous save/shutdown state.
-- Test/debug commands cannot expose credentials or arbitrary process access in production.
-
-## Risks
-
-Many command files allow low permissions, duplicate names, incomplete scripts, shell execution, and raw VM eval. Preserving command names is important, but preserving insecure arbitrary execution is not.
+No command tests are claimed. Prompt 18 full-solution validation and the
+documentation checks are recorded in [MIGRATION_STATUS.md](../../MIGRATION_STATUS.md).
