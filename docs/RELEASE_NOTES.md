@@ -4,6 +4,8 @@
 
 Candidate identifier: `infinite-sky-dotnet10-prompt25-rc1`. This is a local, unpublished, unaccepted review package. No semantic version or release date is assigned. See [RELEASE_MANIFEST.md](migration/RELEASE_MANIFEST.md) for source revision, target, archive, and hash.
 
+The measured local archive is `artifacts/release-candidate/infinite-sky-dotnet10-prompt25-rc1-win-x64.zip` (3,066,194 bytes; SHA-256 `DB7BD8A9BC1A843D897773714D9D0439F16AD5BE6474EC16DDD1CA2EF063F67D`). It was published from clean checkout revision `82047a23ca7e22813262924af13cc95cd905b23d` and smoke-started after extraction with safe defaults; world readiness was degraded because no zones were configured.
+
 ## Migration overview
 
 The staged migration provides a .NET Generic Host foundation, validated configuration, bounded TCP transport, selected legacy binary structures, a source-derived login path, account/guild/character persistence slices, world/zone/spatial infrastructure, internal player activation boundaries, and isolated XP/stat arithmetic.
@@ -29,4 +31,6 @@ No database migration or destructive schema change is included. Back up and vali
 - `0ad5f0a` — initial .NET 10 solution foundation.
 - `45ffea3` — security and residual-risk review documentation.
 - `4df1184` — pre-finalization repository head and concise security findings summary.
-- The candidate payload source revision is recorded in [RELEASE_MANIFEST.md](migration/RELEASE_MANIFEST.md).
+- `e4dd1ce` — final documentation and initial locked package graphs.
+- `8911a58` — consistent C# LF checkout for reproducible format verification.
+- `82047a2` — locked `win-x64` target and candidate payload source revision.

@@ -48,7 +48,7 @@ Prompt 24 documented confirmed high-severity compatibility risks: raw TCP login 
 
 ## Deployment and artifact
 
-Prompt 25 creates a local framework-dependent Windows x64 package requiring the .NET 10 runtime. Linux/ARM deployment, self-contained publication, Native AOT, containers, services, production MongoDB, and externally supplied game data are not validated. The package defaults keep networking/database disabled and contains no production secret, database, original client, or game asset. Full manifest information is in [RELEASE_MANIFEST.md](RELEASE_MANIFEST.md).
+Prompt 25 produced a local framework-dependent Windows x64 package from clean checkout `82047a23ca7e22813262924af13cc95cd905b23d`, requiring the .NET 10 runtime. The extracted package started under safe defaults, but world readiness remained degraded with no zones configured; no client, DB, or gameplay workflow was exercised. The archive is 3,066,194 bytes with SHA-256 `DB7BD8A9BC1A843D897773714D9D0439F16AD5BE6474EC16DDD1CA2EF063F67D`. Linux/ARM deployment, self-contained publication, Native AOT, containers, services, production MongoDB, and externally supplied game data are not validated. The package contains no credentials, database, original client, or game asset. Full manifest information is in [RELEASE_MANIFEST.md](RELEASE_MANIFEST.md).
 
 ## Blockers and recommended next actions
 
