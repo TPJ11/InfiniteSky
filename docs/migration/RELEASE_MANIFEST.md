@@ -27,7 +27,7 @@ This manifest records a local, unpublished candidate package. It does not assert
 | Secrets / production database / test credentials | None |
 | Automated tests | 188 passed, 0 failed, 2 opt-in MongoDB integration tests skipped |
 | Clean-checkout validation | Locked restore, Release build (0 warnings/errors), tests, format verification, and `win-x64` publish succeeded |
-| Extracted-package smoke | Started from the extracted archive and remained running for 5 seconds; networking/database disabled, no zones configured, world readiness explicitly degraded; no client or persistence flow exercised |
+| Extracted-package smoke | Both `.\InfiniteSky.Server.exe` and `dotnet .\InfiniteSky.Server.dll` launch commands were run from extracted copies and remained running for 5 seconds; networking/database disabled, no zones configured, world readiness explicitly degraded; no client or persistence flow exercised |
 | Original-client compatibility | Unverified |
 | Release readiness | `NOT_READY` |
 
