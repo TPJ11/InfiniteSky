@@ -118,6 +118,7 @@ Implemented foundation features:
 - normal float32 and legacy scalar bug support;
 - receive frame parser;
 - opcode registry/core fixed descriptors;
+- source-derived login greeting structure, emitted on login connection-open;
 - shared equipment, storage, gift, quick-use, spawn, region, attack, map, pin, login, handshake, and envelope structures.
 
 Not implemented:
@@ -126,6 +127,5 @@ Not implemented:
 - complete Character struct;
 - WorldAuth and WorldState packets;
 - compression algorithm;
-- network or socket behavior;
-- packet handlers or authentication;
+- complete client-facing login/world packet dispatch (only the login greeting and login request/reply path are connected);
 - every packet in the packet catalogue.

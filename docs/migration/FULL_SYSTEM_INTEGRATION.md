@@ -77,6 +77,6 @@ Protocol framing and packet descriptors are connected to the transport. The logi
 - MongoDB tests use Testcontainers only when explicitly opted in. No production database or data was touched.
 - Zone loading uses configured IDs and available legacy resources. Missing `.IMG` catalogs and `.WREGION` data prevent claiming complete gameplay/world readiness.
 - The networking and database defaults are disabled. Configuration examples are in [`RUNTIME_CONFIGURATION.md`](./RUNTIME_CONFIGURATION.md).
-- No original client was run; this work does not claim client compatibility or begin Prompt 21.
+- Prompt 20 did not run an original client or claim client compatibility. Prompt 21's inventory, source-derived greeting change, and remaining client blockers are documented in [`CLIENT_COMPATIBILITY_READINESS.md`](./CLIENT_COMPATIBILITY_READINESS.md).
 
 Detailed outcomes are listed in [`END_TO_END_TEST_SCENARIOS.md`](./END_TO_END_TEST_SCENARIOS.md); harness scope and commands are in [`INTEGRATION_TEST_HARNESS.md`](./INTEGRATION_TEST_HARNESS.md).

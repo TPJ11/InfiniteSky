@@ -2,7 +2,7 @@
 
 ## Decision
 
-**Prompt 20 established a bounded host/network/login integration baseline; the server is not ready for original-client testing.** The integrated socket path ends at authenticated account session creation. Character/world protocols, gameplay, persistence-backed client journeys and original game assets remain absent, incomplete, or blocked. This report does not claim a complete MMORPG workflow, and Prompt 21 has not started.
+**Prompt 20 established a bounded host/network/login integration baseline; Prompt 21 confirmed the server is still not ready for original-client testing.** The integrated socket path ends at authenticated account session creation. Prompt 21 added the source-derived login greeting and tested it with simulated loopback clients, but no original game-client build or attributable client capture was available. Character/world protocols, gameplay, persistence-backed client journeys and original game assets remain absent, incomplete, or blocked.
 
 ## Readiness checklist
 
@@ -38,12 +38,12 @@ These results verify a narrow login integration and several host boundaries, not
 
 ## Required preconditions before original-client testing
 
-1. Provide authorized representative game-data assets and sanitized legacy BSON samples.
+1. Provide an authorized original client build with provenance, representative game-data assets, and sanitized legacy BSON samples.
 2. Resolve and fixture the required character, world-auth, world-state, and transfer packets.
 3. Implement source-backed character list/selection/world-entry dispatch and lifecycle wiring.
 4. Establish persistence ownership and safe character/item/guild save behavior.
 5. Connect zone/player/entity state to actual packet output and disconnect cleanup.
 6. Implement only gameplay/social/admin features whose source, data and protocol dependencies are verified.
-7. Execute isolated MongoDB integration tests and verify every planned client workflow with actual sockets.
+7. Execute isolated MongoDB integration tests and verify every planned client workflow with the original client over actual sockets.
 
-The above blockers make original-client testing premature. Prompt 21 has not started and requires separate explicit approval.
+The above blockers make original-client testing premature. Prompt 21 source-derived work is complete, but no original-client compatibility claim is made. Do not begin Prompt 22 without explicit approval.

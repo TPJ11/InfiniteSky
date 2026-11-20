@@ -240,7 +240,7 @@
 | INT-005 | Integration | Zone transfer integration | login/world/zonechange | Logout/reconnect/queue/portal transfer | `InfiniteSky.Server.IntegrationTests` | WLD-005, PRO-010, PRO-014 | L | P0 | NOT_STARTED | Success/failure/timeout transfer transcripts pass | — |
 | INT-006 | Integration | MongoDB legacy data migration | all `db/*.js` and data handlers | Existing collections with sparse Mixed data | `tools/InfiniteSky.DataCompare` | PER-011 | XL | P0 | NOT_STARTED | Dry-run and shadow comparison show zero loss of selected fields | Requires representative production fixture |
 | INT-007 | Integration | Packet fixture harness | `data/packets`, protocol docs | Captures and reconstructed fixtures | `InfiniteSky.Protocol.Tests` / fixture runner | PRO-001..033 | L | P0 | NOT_STARTED | All classified fixtures execute in CI with stable hashes | — |
-| INT-008 | Integration | Client compatibility soak | current Node server and client protocol | Long-lived gameplay under actual legacy client | `InfiniteSky.Server.IntegrationTests` | INT-001..005 | XL | P0 | NOT_STARTED | Configured soak completes with no disconnect/protocol regressions | Human/client test evidence required |
+| INT-008 | Integration | Client compatibility soak | current Node server and client protocol | Long-lived gameplay under actual legacy client | `InfiniteSky.Server.IntegrationTests` | INT-001..005 | XL | P0 | BLOCKED | Configured soak completes with no disconnect/protocol regressions | No original client executable/build is available in the repository/workspace; Prompt 21 performed no real-client test |
 | INT-009 | Integration | Performance budget | hot packet/spatial/save paths | No formal budgets | `tests/performance` / benchmark suite | INF-010, WLD-002, NET-002, PER-012 | L | P1 | NOT_STARTED | Baseline throughput, tick p95, allocation and GC limits documented/met | Include 10/100/target concurrent profiles |
 | INT-010 | Integration | Graceful restart/reconnect | main/db/world disconnects | Partial save/logout logic | `InfiniteSky.Server.IntegrationTests` | INF-006, PER-012, NET-009 | L | P0 | IN_PROGRESS | Restart drains, account status recovers, reconnect resumes saved state | Host shutdown closes an active login session and login reconnect is tested; active-player saves/restart recovery remain unverified |
 | INT-011 | Integration | FruitSalad item editor | `FruitSalad/Processes/ItemEditor/**` | Express/socket.io item editor | `tools/` / admin data tool | INF-012, DAT-003 | XL | P3 | NOT_STARTED | Required editing flows reproduced or explicitly excluded | Experimental tooling |
@@ -270,6 +270,30 @@ This operational roll-up supplements the feature IDs above; it adds no matrix fe
 | Multi-client workflow | IN_PROGRESS | Duplicate-account login and reconnect are covered; multi-player visibility/chat/gameplay are not. |
 | Failure recovery | IN_PROGRESS | Invalid configuration, unavailable Mongo at startup, and partial listener bind rollback are tested; post-start listener/database recovery is not. |
 | End-to-end test coverage | IN_PROGRESS | A host-composed socket login harness exists; character-to-gameplay scenarios remain blocked/unstarted. |
+
+## Prompt 21 original-client compatibility overlay
+
+This operational roll-up supplements the feature IDs above and adds no matrix feature IDs. Statuses concern original-client compatibility; source-derived protocol tests and simulated clients are not real-client evidence.
+
+| Compatibility area | Status | Evidence / limitation |
+|---|---|---|
+| Client build/version inventory | BLOCKED | No original game executable, build identity, client assets, or runtime dependency manifest was available in the repository/workspace. |
+| Client connection and login greeting | BLOCKED | The exact source-derived 21-byte greeting is now sent and asserted on a loopback socket; no original client was available to observe it. |
+| Packet framing and serialization | BLOCKED | Existing source-derived framing/codec tests pass, but there is no attributable client capture/build to validate client behavior. |
+| Authentication | BLOCKED | Simulated host login covers the 41-byte response and sessions with test persistence; real client and live Mongo are untested. |
+| Character selection/loading | BLOCKED | Character list/selection handlers and full Character wire mapping are absent. |
+| World entry and zone transition | BLOCKED | No login transfer/world authentication dispatch or client-bound player lifecycle. |
+| Movement and visibility | BLOCKED | No world movement handler or entity replication path. |
+| Gameplay | BLOCKED | Isolated components are not reachable through client packet handling. |
+| Chat/social | BLOCKED | No world chat/social packet dispatch. |
+| Scripting interactions | BLOCKED | No compatible runtime/API/event bridge. |
+| Administrative commands | BLOCKED | No world chat ingress or command dispatcher. |
+| Disconnect and recovery | BLOCKED | Login-only simulated cleanup is covered; active world-player lifecycle is not connected. |
+| Multi-client compatibility | BLOCKED | No original clients or client-reachable world workflow. |
+| Compression/encryption/version requirements | BLOCKED | Legacy source/helper evidence is incomplete or ambiguous; no negotiation or transform was invented. |
+| Live Node differential reference | BLOCKED | Missing dependencies, isolated legacy configuration, test script, and local MongoDB; Node server was not run. |
+
+Detailed evidence is in [`ORIGINAL_CLIENT_COMPATIBILITY_MATRIX.md`](migration/ORIGINAL_CLIENT_COMPATIBILITY_MATRIX.md), [`CLIENT_PROTOCOL_CAPTURES.md`](migration/CLIENT_PROTOCOL_CAPTURES.md), and [`CLIENT_COMPATIBILITY_READINESS.md`](migration/CLIENT_COMPATIBILITY_READINESS.md). No compatibility area is marked `VERIFIED`.
 
 ## Coverage notes
 

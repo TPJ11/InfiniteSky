@@ -16,6 +16,13 @@ public sealed partial class LoggingIncomingPacketSink : IIncomingPacketSink
         _logger = logger;
     }
 
+    public ValueTask OnConnectionOpenedAsync(
+        NetworkConnection connection,
+        CancellationToken cancellationToken)
+    {
+        return ValueTask.CompletedTask;
+    }
+
     public ValueTask OnFrameAsync(
         NetworkConnection connection,
         LegacyProtocolFrame frame,

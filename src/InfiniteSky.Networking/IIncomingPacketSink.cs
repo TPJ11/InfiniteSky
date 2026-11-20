@@ -6,6 +6,10 @@ namespace InfiniteSky.Networking;
 /// </summary>
 public interface IIncomingPacketSink
 {
+    ValueTask OnConnectionOpenedAsync(
+        NetworkConnection connection,
+        CancellationToken cancellationToken);
+
     ValueTask OnFrameAsync(
         NetworkConnection connection,
         LegacyProtocolFrame frame,

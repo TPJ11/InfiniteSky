@@ -30,6 +30,24 @@ public sealed partial class AuthenticationIncomingPacketSink : IIncomingPacketSi
         _logger = logger;
     }
 
+    public async ValueTask OnConnectionOpenedAsync(
+        NetworkConnection connection,
+        CancellationToken cancellationToken)
+    {
+        if (connection.EndpointKind != NetworkEndpointKind.Login)
+        {
+            return;
+        }
+
+        var writer = new LegacyBinaryWriter();
+        new LegacyLoginGreeting(0, 1000).Encode(writer);
+        bool sent = await connection.SendAsync(writer.WrittenMemory, cancellationToken);
+        if (!sent && connection.State == NetworkConnectionState.Connected)
+        {
+            throw new IOException("Could not send the legacy login greeting.");
+        }
+    }
+
     public async ValueTask OnFrameAsync(
         NetworkConnection connection,
         LegacyProtocolFrame frame,

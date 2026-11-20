@@ -456,6 +456,7 @@ public sealed class AuthenticationTests
             IPEndPoint endpoint = Assert.IsType<IPEndPoint>(listener.LocalEndPoint);
             using var client = new TcpClient();
             await client.ConnectAsync(endpoint.Address, endpoint.Port);
+            await AssertLoginGreetingAsync(client);
 
             await SendLoginAsync(client, "PlayerName", "wrong");
             byte[] rejectedReply = await ReadReplyAsync(client);
@@ -473,6 +474,7 @@ public sealed class AuthenticationTests
 
             using var duplicateClient = new TcpClient();
             await duplicateClient.ConnectAsync(endpoint.Address, endpoint.Port);
+            await AssertLoginGreetingAsync(duplicateClient);
             await SendLoginAsync(duplicateClient, "PlayerName", "Secret123");
             byte[] duplicateReply = await ReadReplyAsync(duplicateClient);
             Assert.Equal((byte)LegacyLoginStatus.AlreadyLoggedIn, duplicateReply[1]);
@@ -574,6 +576,16 @@ public sealed class AuthenticationTests
         byte[] reply = new byte[LegacyLoginReply.WireSize];
         await client.GetStream().ReadExactlyAsync(reply);
         return reply;
+    }
+
+    private static async Task AssertLoginGreetingAsync(TcpClient client)
+    {
+        byte[] greeting = new byte[LegacyLoginGreeting.WireSize];
+        await client.GetStream().ReadExactlyAsync(greeting);
+
+        var expectedWriter = new LegacyBinaryWriter();
+        new LegacyLoginGreeting(0, 1000).Encode(expectedWriter);
+        Assert.Equal(expectedWriter.ToArray(), greeting);
     }
 
     private sealed class TestAccountRepository : IAccountAuthenticationRepository

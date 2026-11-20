@@ -6,6 +6,7 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 
 - The .NET 10 solution foundation, core domain models, binary protocol foundation, TCP infrastructure, authentication flow, MongoDB account/guild-read/character-location persistence slices, world/zone infrastructure, and internal player activation boundary are implemented where evidence supports it. Prompt 16 has isolated XP and stat-allocation arithmetic slices in progress; full packet, data, entity simulation, database, and gameplay migration remains incomplete. Prompt 17 audited legacy scripting and plugin behavior; no compatible runtime or native plugin API was added, and affected features are marked blocked/not started/not applicable in the matrix.
 - Prompt 20 verifies a bounded host-composed TCP login/session path with test persistence, duplicate rejection, reconnect, shutdown cleanup, and listener-start rollback. It does not complete character/world/gameplay integration or verify live MongoDB/original-client compatibility.
+- Prompt 21 added the source-backed login greeting to the .NET login connection path and verified its bytes with an existing golden fixture and loopback tests. No original client or live Node reference was available; real-client compatibility remains blocked.
 - A feature may be `VERIFIED` only after its test/acceptance evidence exists and is linked.
 - `IMPLEMENTED` is not `VERIFIED`.
 - Blockers are documented below, in the matrix notes, and in `docs/migration/MIGRATION_RISKS.md`.
@@ -15,11 +16,11 @@ This file is the authoritative dashboard for the .NET 10 migration. Update it on
 | Metric | Count |
 |---|---:|
 | Total features | 232 |
-| NOT_STARTED | 138 |
+| NOT_STARTED | 137 |
 | IN_PROGRESS | 7 |
 | IMPLEMENTED | 48 |
 | VERIFIED | 14 |
-| BLOCKED | 24 |
+| BLOCKED | 25 |
 | NOT_APPLICABLE | 1 |
 | Overall verified progress | 6.0% |
 
@@ -209,6 +210,16 @@ The scenario ledger is in [END_TO_END_TEST_SCENARIOS.md](docs/migration/END_TO_E
 Matrix statuses `INT-001`, `INT-010`, and `INT-015` moved from `NOT_STARTED` to `IN_PROGRESS` for the tested login slice, host shutdown/reconnect evidence, and Prompt 20 documentation; their full acceptance criteria remain unmet. The matrix totals are now 138 `NOT_STARTED`, 7 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 24 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). No overall server or full client journey was marked `VERIFIED`.
 
 Prompt 20 validation: `dotnet restore InfiniteSky.sln` succeeded; `dotnet build InfiniteSky.sln --no-restore` passed with 0 warnings and 0 errors; `dotnet test InfiniteSky.sln --no-build` passed 186 tests with 0 failures and 2 opt-in MongoDB tests skipped (Domain 50, Protocol 24, GameData 5, World 22, Server integration 62, Persistence 23 passed); the focused host/socket test filter passed 2/2; `dotnet format InfiniteSky.sln --verify-no-changes --no-restore` and `git diff --check` passed. A repository-wide scan checked 822 local Markdown file links with no broken targets. Original Node.js files and production data were not modified. Live MongoDB, character/world workflows, and original-client compatibility remain unverified.
+
+## Prompt 21 — original-client compatibility testing
+
+Repository/workspace inventory found legacy TSX private-server helper/launcher source and one old pcap, but no original game-client executable/build, client version, or required client asset set. The helper is not the game client, and the pcap has no documented client provenance; its payload was not copied into tests or documentation. No `node_modules`, working legacy `config.json`, package test script target, or local MongoDB service was available, so neither the original client nor the Node.js reference server was run.
+
+Source comparison identified one directly evidenced login mismatch: Node sends the 21-byte `0x00` server-list greeting when a login socket connects, while the .NET listener previously did not send any initial application packet. The networking sink now has an awaited connection-open callback; the login sink emits `LegacyLoginGreeting(0, 1000)` before processing requests. The existing source-derived greeting fixture and loopback integration tests verify exact bytes and ordering. This is protocol/source and simulated-socket evidence only, not client-based verification. Successful .NET authentication still does not send character slots; no character/world success response was fabricated.
+
+Seven Prompt 21 reports document the environment, compatibility matrix, capture inventory, packet fixture provenance, issues/fixes, test results, and readiness decision. [`CLIENT_COMPATIBILITY_READINESS.md`](docs/migration/CLIENT_COMPATIBILITY_READINESS.md) concludes real-client testing is `BLOCKED`. `INT-008` moved from `NOT_STARTED` to `BLOCKED` because an original client build is unavailable. The matrix totals are now 137 `NOT_STARTED`, 7 `IN_PROGRESS`, 48 `IMPLEMENTED`, 14 `VERIFIED`, 25 `BLOCKED`, and 1 `NOT_APPLICABLE` (232 total). No client compatibility row is `VERIFIED`; Prompt 22 has not started.
+
+Prompt 21 validation: `dotnet restore InfiniteSky.sln` succeeded; the full solution build passed with 0 warnings/errors; `dotnet test InfiniteSky.sln --no-build` passed 186 tests, 0 failed, and 2 opt-in MongoDB tests skipped (Domain 50, Protocol 24, GameData 5, World 22, Server integration 62, Persistence 23 passed); the server integration project passed 62/62; `dotnet format InfiniteSky.sln --verify-no-changes --no-restore` and `git diff --check` passed. A repository-wide scan checked 874 local Markdown links with no broken targets. No original-client or live Node differential test ran. Original Node.js files, client binaries, production data, and the existing pcap were not modified.
 
 ## Dependency warnings
 

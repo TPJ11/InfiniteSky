@@ -15,6 +15,7 @@ The C# transport:
 - removes/disposes connections exactly once;
 - identifies whether each connection belongs to the login or world listener;
 - delegates login authentication/session association to the application layer;
+- allows the application sink to emit source-backed endpoint-open bytes before receive processing;
 - does not implement character sessions, world transfer, or players.
 
 ## Listener configuration
@@ -63,7 +64,7 @@ The protocol project owns frame opcode/layout knowledge. The networking project 
 
 ## Listener lifecycle
 
-`NetworkHostedService` is a server-host hosted service.
+`NetworkHostedService` is a server-host hosted service. After a connection is accepted, the connection starts its send loop and awaits the application sink's connection-open callback before starting receive processing. The login sink emits the source-derived 21-byte login greeting; other sink implementations may leave the callback empty.
 
 Startup:
 

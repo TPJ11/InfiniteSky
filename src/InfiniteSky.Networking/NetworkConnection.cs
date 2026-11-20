@@ -82,7 +82,7 @@ public sealed partial class NetworkConnection : IAsyncDisposable
         }
     }
 
-    public void Start()
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
         lock (_stateSync)
         {
@@ -102,12 +102,31 @@ public sealed partial class NetworkConnection : IAsyncDisposable
             _state = NetworkConnectionState.Connected;
         }
 
+        _sendTask = SendLoopAsync();
         _metrics.Accepted();
         if (_logger.IsEnabled(LogLevel.Information))
         {
             string connectionId = Id.ToString();
             string remoteEndpoint = RemoteEndPoint?.ToString() ?? "unknown";
             LogConnected(_logger, connectionId, remoteEndpoint);
+        }
+
+        try
+        {
+            await _sink.OnConnectionOpenedAsync(this, cancellationToken);
+            if (State == NetworkConnectionState.Connected)
+            {
+                _receiveTask = ReceiveLoopAsync();
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            await CloseCoreAsync(NetworkConnectionState.Closed, CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            LogConnectionOpenFailure(_logger, Id.ToString(), exception);
+            await CloseCoreAsync(NetworkConnectionState.Faulted, CancellationToken.None);
         }
     }
 
@@ -429,4 +448,13 @@ public sealed partial class NetworkConnection : IAsyncDisposable
     private static partial void LogIdleTimeout(
         ILogger logger,
         string connectionId);
+
+    [LoggerMessage(
+        EventId = 3005,
+        Level = LogLevel.Error,
+        Message = "Connection initialization failed for TCP connection {ConnectionId}.")]
+    private static partial void LogConnectionOpenFailure(
+        ILogger logger,
+        string connectionId,
+        Exception exception);
 }

@@ -285,6 +285,13 @@ public sealed class NetworkingTests
         public TaskCompletionSource<LegacyProtocolFrame> Frame { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public ValueTask OnConnectionOpenedAsync(
+            NetworkConnection connection,
+            CancellationToken cancellationToken)
+        {
+            return ValueTask.CompletedTask;
+        }
+
         public ValueTask OnFrameAsync(
             NetworkConnection connection,
             LegacyProtocolFrame frame,

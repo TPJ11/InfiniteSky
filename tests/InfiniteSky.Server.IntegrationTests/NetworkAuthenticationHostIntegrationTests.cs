@@ -33,6 +33,7 @@ public sealed class NetworkAuthenticationHostIntegrationTests
 
         using var client = new TcpClient();
         await client.ConnectAsync(IPAddress.Loopback, loginPort);
+        await AssertLoginGreetingAsync(client);
         await SendLoginAsync(client, "HostPlayer", "Secret123");
 
         byte[] reply = new byte[LegacyLoginReply.WireSize];
@@ -54,6 +55,7 @@ public sealed class NetworkAuthenticationHostIntegrationTests
         using (var duplicateClient = new TcpClient())
         {
             await duplicateClient.ConnectAsync(IPAddress.Loopback, loginPort);
+            await AssertLoginGreetingAsync(duplicateClient);
             await SendLoginAsync(duplicateClient, "HostPlayer", "Secret123");
             byte[] duplicateReply = await ReadReplyAsync(duplicateClient);
             Assert.Equal((byte)LegacyLoginStatus.AlreadyLoggedIn, duplicateReply[1]);
@@ -75,6 +77,7 @@ public sealed class NetworkAuthenticationHostIntegrationTests
 
         using var reconnectedClient = new TcpClient();
         await reconnectedClient.ConnectAsync(IPAddress.Loopback, loginPort);
+        await AssertLoginGreetingAsync(reconnectedClient);
         await SendLoginAsync(reconnectedClient, "HostPlayer", "Secret123");
         byte[] reconnectReply = await ReadReplyAsync(reconnectedClient);
         Assert.Equal((byte)LegacyLoginStatus.Success, reconnectReply[1]);
@@ -162,6 +165,18 @@ public sealed class NetworkAuthenticationHostIntegrationTests
             .AsTask()
             .WaitAsync(TimeSpan.FromSeconds(3));
         return reply;
+    }
+
+    private static async Task AssertLoginGreetingAsync(TcpClient client)
+    {
+        byte[] greeting = new byte[LegacyLoginGreeting.WireSize];
+        await client.GetStream().ReadExactlyAsync(greeting)
+            .AsTask()
+            .WaitAsync(TimeSpan.FromSeconds(3));
+
+        var expected = new LegacyBinaryWriter();
+        new LegacyLoginGreeting(0, 1000).Encode(expected);
+        Assert.Equal(expected.ToArray(), greeting);
     }
 
     private static async Task WaitUntilAsync(

@@ -173,7 +173,7 @@ public sealed partial class LegacyTcpListener : IAsyncDisposable
                     _connections.Add(connection);
                 }
 
-                connection.Start();
+                await connection.StartAsync(_lifecycle.Token);
             }
         }
         catch (OperationCanceledException) when (_lifecycle.IsCancellationRequested)
